@@ -9,7 +9,7 @@
 #include "boost/optional.hpp"
 
 #include "route_types.h"
-#include "segment_index.h"
+#include "route_index.h"
 
 namespace path_planner {
 

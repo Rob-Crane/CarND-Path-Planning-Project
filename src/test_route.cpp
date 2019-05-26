@@ -3,8 +3,8 @@
 
 using namespace path_planner;
 int main() {
-  RouteFrame rf({0.0, 1.0, 1.0, 0.0}, {0.0, 0.0, 1.0, 1.0},
-                {0.0, 1.0, 2.0, 3.0});
+  RouteFrame rf({0.0, 10.0, 10.0, 0.0}, {0.0, 0.0, 10.0, 10.0},
+                {0.0, 10.0, 20.0, 30.0});
   InertialCoordinate inertial(0.5, 1.1);
   auto opt_route = rf.to_route(inertial);
   if (opt_route) {
