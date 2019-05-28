@@ -17,6 +17,7 @@ RouteIndex::RouteIndex(const std::vector<RouteSegment>& route) {
 }
 
 size_t RouteIndex::get_segment_ind(double s) const {
+
   double route_end = segment_ends_.back().first;
   auto comp = [](const SegmentPair& p1, const SegmentPair& p2) {
     return p1.first < p2.first;
@@ -53,6 +54,15 @@ KDTreeRouteSegmentIndex::KDTreeRouteSegmentIndex(
     y_iter += 1;
     s_iter += 1;
   }
+  // Last segment connnects to first waypoint.
+  Waypoint penultimate(maps_x.back(), maps_y.back(), maps_s.back());
+
+  Eigen::Vector2d diff =
+      penultimate.inertial().pt() - route_.front().pt0().inertial().pt();
+  double last_leg_mag = std::sqrt(diff.transpose() * diff);
+  Waypoint last(maps_x.front(), maps_y.front(),
+                penultimate.route().s() + last_leg_mag);
+  route_.emplace_back(std::move(penultimate), std::move(last));
 
   // Construct RouteIndex.
   route_index_ = RouteIndex(route_);

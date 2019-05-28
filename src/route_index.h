@@ -34,7 +34,7 @@ class KDTreeRouteSegmentIndex {
   RouteSegment closest(const RouteCoordinate& query_pt) const;
 
   // Interface expected for DatasetAdapter
-  inline size_t kdtree_get_point_count() const { return 2 * route_.size(); }
+  inline size_t kdtree_get_point_count() const { return route_.size(); }
 
   inline double kdtree_get_pt(const size_t idx, int dim) const {
     Eigen::Vector2d midpoint = (route_[idx].pt0().inertial().pt() +

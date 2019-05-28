@@ -40,8 +40,9 @@ boost::optional<RouteCoordinate> RouteSegment::to_route(
 }
 
 InertialCoordinate RouteSegment::to_inertial(const RouteCoordinate& p) const {
+  Vector2d local = p.pt() - pt0_.route().pt();
   return InertialCoordinate(pt0_.inertial().pt() +
-                            route_proj_.inverse() * p.pt());
+                            route_proj_.inverse() * local);
 }
 
 }  // path_planner
