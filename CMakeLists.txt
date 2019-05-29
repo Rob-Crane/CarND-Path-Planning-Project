@@ -8,7 +8,7 @@ set(CXX_FLAGS "-Wall")
 set(CMAKE_CXX_FLAGS, "${CXX_FLAGS}")
 
 #set(sources src/main.cpp src/route_frame.cpp src/route_types.cpp src/route_index.cpp src/test_route.cpp)
-set(sources src/route_frame.cpp src/route_types.cpp src/route_index.cpp src/test_route.cpp)
+set(sources src/route_frame.cpp src/route_types.cpp src/route_index.cpp src/route_smoother.cpp src/test_route.cpp)
 
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 

@@ -19,7 +19,7 @@ class RouteFrame;
 using RouteFramePtr = std::shared_ptr<RouteFrame>;
 using RouteIter = std::vector<RouteSegment>::const_iterator;
 
-class TrajectoryPoint : public Point {
+class TrajectoryPoint {
  public:
   TrajectoryPoint() = delete;
   TrajectoryPoint(const InertialCoordinate& inertial_pt,
@@ -28,8 +28,8 @@ class TrajectoryPoint : public Point {
   TrajectoryPoint(const RouteCoordinate& route_pt, RouteFramePtr route_frame)
       : opt_route_pt_(route_pt), route_frame_(std::move(route_frame)) {}
 
-  InertialCoordinate inertial() const final;
-  RouteCoordinate route() const final;
+  InertialCoordinate inertial() const;
+  RouteCoordinate route() const;
 
  private:
   RouteFramePtr route_frame_;

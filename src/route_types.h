@@ -6,8 +6,9 @@
 
 namespace path_planner {
 
-using Matrix2d = Eigen::Matrix2d;
-using Vector2d = Eigen::Vector2d;
+using Eigen::Matrix2d;
+using Eigen::Vector2d;
+using PointMatrix = Eigen::Matrix<double, 2, Eigen::Dynamic, Eigen::RowMajor>;
 
 struct InertialCoordinate {
   InertialCoordinate() = default;
@@ -49,10 +50,34 @@ class Waypoint : public Point {
   RouteCoordinate route_;
 };
 
-class RouteSegment {
+
+class Projection {
+ public:
+  Projection() = default;
+  Projection(const Vector2d& v) {
+    norm_ = v.norm();
+    proj_ << v(0) / norm_, v(1) / norm_, v(1) / norm_,
+        -v(0) / norm_;
+  }
+  // Project columns of matrix onto vector.
+  PointMatrix project(const PointMatrix& pts) const { return proj_ * pts; }
+  // Invert the projection on columns of matrix..
+  PointMatrix invert(const PointMatrix& pts) const { return proj_.inverse() * pts; }
+
+ protected:
+  double norm() const { return norm_; }
+ private:
+  double norm_;
+  Matrix2d proj_;  // Projection onto v.
+};
+
+class RouteSegment : protected Projection {
  public:
   RouteSegment() = default;
-  RouteSegment(const Waypoint& pt0, const Waypoint& pt1);
+  RouteSegment(const Waypoint& pt0, const Waypoint& pt1)
+      : Projection(pt1.inertial().pt() - pt0.inertial().pt()),
+        pt0_(pt0),
+        pt1_(pt1) {}
 
   const Waypoint& pt0() const { return pt0_; }
   const Waypoint& pt1() const { return pt1_; }
@@ -62,10 +87,5 @@ class RouteSegment {
  private:
   Waypoint pt0_;
   Waypoint pt1_;
-
-  // Cached values to find d-values.
-  Vector2d segment_; // Euclidean vector from pt0 to pt1.
-  Matrix2d route_proj_; // Projection onto segment_.
-  double norm_;
 };
 }  // path_planner

@@ -1,5 +1,6 @@
 #include <iostream>
 #include "route_frame.h"
+#include "route_smoother.h"
 
 using namespace path_planner;
 int main() {
@@ -17,5 +18,9 @@ int main() {
   RouteCoordinate route(31, 5);
   InertialCoordinate i = rf.to_inertial(route);
   std::cout<<"x: " << std::to_string(i.x()) << " y: " << std::to_string(i.y())<<std::endl;
+  RouteSmoother rs({0.0, 10.0, 10.0, 0.0}, {0.0, 0.0, 10.0, 10.0},
+                {0.0, 10.0, 20.0, 30.0});
+  rs.get_smooth_route(3, 0.1);
+
 
 }
