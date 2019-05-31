@@ -21,32 +21,37 @@ RouteSmoother::RouteSmoother(const std::vector<double>& maps_x,
 std::vector<RouteSegment> RouteSmoother::get_smooth_route(unsigned num_bookend,
                                                           double ds) {
   std::vector<RouteSegment> route;
-  for (unsigned i = 0; i < num_base_; ++i) {
-    // Get a base vector from route point i to point i+1.
-    Vector2d v = base_pts_.col(i) - base_pts_.col((i - 1) % num_base_);
-    // Get a projection onto base vector.
-    Projection proj(v);
-    // Take the points that make up the vector and bookend points to left and
-    // right.
-    // Include spline_pts_[left, right)
-    unsigned left_bookend = (i - num_bookend) % num_base_;
+  unsigned num_spline = 2 + 2 * num_bookend;
+  assert(num_spline <= num_base_);
+  for (int i = 0; i < num_base_; ++i) {
+    // Grab the points before and after the route vector starting
+    // at position i.
+    int left_mod = (i - int(num_bookend)) % int(num_base_);
+    unsigned left_bookend = left_mod < 0 ? left_mod + num_base_ : left_mod;
     unsigned right_bookend = (i + 1 + num_bookend) % num_base_;
-    unsigned num_spline = 2 + 2 * num_bookend;
-    // TODO figure out the wrapping block
-    // Get them in local cooridinate frame  of base vector.
-    //PointMatrix spline_pts = proj.project(
-        //base_pts_.block(0, left_bookend, 2, num_spline).colwise() - base_pts_.col(i));
-    PointMatrix spline_pts = base_pts_.block(0, 0, 2, 0);
-    std::cout<<spline_pts.size()<<std::endl;;
+    PointMatrix fit_pts(2, num_spline);
+    if (right_bookend < left_bookend) {
+      fit_pts << base_pts_.block(0, left_bookend, 2, num_base_ - left_bookend),
+          base_pts_.block(0, 0, 2, right_bookend + 1);
+    } else {
+      fit_pts << base_pts_.block(0, left_bookend, 2, num_spline);
+    }
+
+    // Get a base vector from route point i to point i+1.
+    Vector2d v =  base_pts_.col((i + 1) % num_base_) - base_pts_.col(i);
+    // Get a projection matrix onto base vector.
+    Projection proj(v);
+    // Project fit points onto vector to get in local frame.
+    PointMatrix spline_pts = proj.project(fit_pts);
+    auto begin = spline_pts.data();
+    auto begin_y = begin + num_spline;
+    auto end = begin_y + num_spline;
+    std::vector<double> x(begin, begin_y);
+    std::vector<double> y(begin_y, end);
 
     // Fit spline to those points.
-    //tk::spline s;
-    //auto begin = spline_pts.data();
-    //auto begin_y = begin + num_spline;
-    //auto end = begin_y + num_spline;
-    //std::vector<double> x(begin, begin_y);
-    //std::vector<double> y(begin_y, end);
-    //s.set_points(x, y);
+    tk::spline s;
+    s.set_points(x, y);
   }
   return route;
 }
