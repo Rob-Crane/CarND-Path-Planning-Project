@@ -1,5 +1,7 @@
 #include "route_smoother.h"
 
+#include <cmath>
+
 #include "spline.h"
 
 namespace path_planner {
@@ -23,6 +25,7 @@ std::vector<RouteSegment> RouteSmoother::get_smooth_route(unsigned num_bookend,
   std::vector<RouteSegment> route;
   unsigned num_spline = 2 + 2 * num_bookend;
   assert(num_spline <= num_base_);
+  std::vector<Vector2d> printvs;
   for (int i = 0; i < num_base_; ++i) {
     // Grab the points before and after the route vector starting
     // at position i.
@@ -37,12 +40,14 @@ std::vector<RouteSegment> RouteSmoother::get_smooth_route(unsigned num_bookend,
       fit_pts << base_pts_.block(0, left_bookend, 2, num_spline);
     }
 
+    Vector2d base_begin = base_pts_.col(i);
+    Vector2d base_end = base_pts_.col((i + 1) % num_base_);
     // Get a base vector from route point i to point i+1.
-    Vector2d v =  base_pts_.col((i + 1) % num_base_) - base_pts_.col(i);
+    Vector2d v =  base_end - base_begin;
     // Get a projection matrix onto base vector.
     Projection proj(v);
     // Project fit points onto vector to get in local frame.
-    PointMatrix spline_pts = proj.project(fit_pts);
+    PointMatrix spline_pts = proj.project(fit_pts.colwise() - base_begin);
     auto begin = spline_pts.data();
     auto begin_y = begin + num_spline;
     auto end = begin_y + num_spline;
@@ -52,7 +57,31 @@ std::vector<RouteSegment> RouteSmoother::get_smooth_route(unsigned num_bookend,
     // Fit spline to those points.
     tk::spline s;
     s.set_points(x, y);
+    double end_x = spline_pts.col(num_bookend + 1)[0];
+    int num_interstitials = std::floor(end_x / ds);
+    PointMatrix interstitials(2, num_interstitials);
+    for (int j = 1; j <= num_interstitials; ++j) {
+      Vector2d interstitial;
+      double sx = ds * j;
+      interstitial << sx, s(sx);
+      interstitials.col(j-1) = interstitial;
+    }
+    // Transform interstials to global frame.
+    PointMatrix global_interstitials =
+        proj.invert(interstitials).colwise() + base_begin;
+    // Add base points to beginning and end.
+    PointMatrix route_pts(2, num_interstitials+2);
+    route_pts << base_begin, global_interstitials, base_end;
+    for (int j = 0; j < route_pts.cols(); ++j) {
+      Vector2d v = route_pts.col(j);
+      printvs.push_back(v);
+    }
   }
+  std::cout << "===============" << std::endl;
+  for (int j = 0; j < printvs.size(); ++j) {
+    std::cout<<printvs[j][0] << ", " << printvs[j][1] << std::endl;
+  }
+  std::cout << "===============" << std::endl;
   return route;
 }
 
