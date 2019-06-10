@@ -77,11 +77,9 @@ std::vector<RouteSegment> RouteSmoother::get_smooth_route(unsigned num_bookend,
       printvs.push_back(v);
     }
   }
-  std::cout << "===============" << std::endl;
   for (int j = 0; j < printvs.size(); ++j) {
     std::cout<<printvs[j][0] << ", " << printvs[j][1] << std::endl;
   }
-  std::cout << "===============" << std::endl;
   return route;
 }
 
