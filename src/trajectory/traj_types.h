@@ -1,11 +1,10 @@
 #pragma once
-#include <route_types.h>
 #include <chrono>
 
 namespace path_planner {
 
 using std::chrono::steady_clock;
-using std::chrono::time_point<std::chrono::steady_clock>;
+using time_point = std::chrono::time_point<std::chrono::steady_clock>;
 using seconds = std::chrono::duration<double>;
 using std::chrono::milliseconds;
 

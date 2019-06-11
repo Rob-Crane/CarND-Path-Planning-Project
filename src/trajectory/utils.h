@@ -1,6 +1,8 @@
 #pragma once
 
-#include "trajectory/traj_types.h"
+#include "traj_types.h"
+
+#include <cmath>
 
 namespace path_planner {
 
