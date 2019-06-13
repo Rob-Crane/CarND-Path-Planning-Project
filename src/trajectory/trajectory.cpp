@@ -30,33 +30,36 @@ Sx ConstantSpeedLongitudinalTrajectory::at(time_point t) const {
 
 constexpr double kAvgDecel = -5.0;
 constexpr double kAvgAccel = 4.0;
-constexpr double kMaxVel = 30.0;
+constexpr double kVClose = 30.0;
 constexpr double kMaintainDistance = 10.0;
-constexpr double kTrapDistance = 15.0;
-static_assert(kTrapDistance > kMaintainDistance);
+constexpr double kNominalCloseTime = 5.0;
+// constexpr double kTrapDistance = 15.0;
+// static_assert(kTrapDistance > kMaintainDistance);
 
-Sx SmoothLongitudinalTrajectory::at(time_point t) const {
-  assert(t > begin_t());
-  if (blocking_ && blocking_->begin_v() < kMaxVel &&
-      std::abs(begin_s() - blocking_->begin_s()) < kTrapDistance) {
-    return blocked(t);
-  } 
-  return unblocked(t);
-}
+FollowCarTrajectory::FollowCarTrajectory(
+    Sx begin_s, Sv begin_v, Sa begin_a, time_point begin_t,
+    const ConstantSpeedLongitudinalTrajectory& blocking_traj);
+  : LongitudinalTrajectory(begin_s, begin_v, begin_a, begin_t){
+    assert(blocking_traj.begin_t() ==
+           begin_t());  // Verify trajectories generated from current time base.
+    KinematicPoint curr(begin_s(), begin_v(), begin_a(), begin_t());
+    KinematicPoint blocking(blocking_traj.begin_s(), blocking_traj.begin_v(),
+                            blocking_traj.begin_a(), blocking_traj.begin_t());
+    KinematicPoint intercept =
+        get_time_to_target(curr, blocking, kAvgAccel, kAvgDecel, kVClose,
+                           kMaintainDistance, kNominalCloseTime);
+    traj_ = JerkMinimizingTrajectory(curr, intercept);
+  }
+
+  Sx FollowCarTrajectory::at(time_point t) const {
+    assert(t > begin_t());
+    KinematicPoint p = traj_(t);
+    return p.x_;
+  }
 
   // double slowdown_time = blocking->begin_v() - begin_v() / kAvgDecel;
   // assert(slowdown_time > 0);
   // double slowdown_distance = begin_v() * slowdown_time +
   // 0.5 * kAvgDecel * slowdown_time * slowdown_time;
 
-Sx SmoothLongitudinalTrajectory::unblocked(time_point t) const {
-  assert(begin_v() <= kMaxVel);
-  double ta = (kMaxVel - begin_v()) / kAvgAccel;
-  assert(ta => 0.0);
-  double delta_t = seconds(t - begin_t()).count();
-  if (ta < delta_t) {
-    return begin_s() + begin_v() * delta_t + 0.5 *
-  }
-}
-
-}  // path_planner
+  }  // path_planner

@@ -39,8 +39,11 @@ class ConstantSpeedLateralTrajectory : public LateralTrajectory {
 
 class LongitudinalTrajectory {
  public:
-  LongitudinalTrajectory(Sx begin_s, Sv begin_v, time_point begin_t)
-      : begin_s_(begin_s), begin_v_(begin_v), begin_t_(begin_t){};
+  LongitudinalTrajectory(Sx begin_s, Sv begin_v, Sa begin_a, time_point begin_t)
+      : begin_s_(begin_s),
+        begin_v_(begin_v),
+        begin_a_(begin_a),
+        begin_t_(begin_t){};
   virtual Sx at(time_point t) const = 0;
   Sx begin_s() const { return begin_s_; }
   Sv begin_v() const { return begin_v_; }
@@ -49,6 +52,7 @@ class LongitudinalTrajectory {
  private:
   Sx begin_s_;
   Sv begin_v_;
+  Sa begin_a_;
   time_point begin_t_;
 };
 
@@ -57,38 +61,29 @@ class ConstantSpeedLongitudinalTrajectory : public LongitudinalTrajectory {
  public:
   ConstantSpeedLongitudinalTrajectory(Sx begin_s, Sv begin_v,
                                       time_point begin_t)
-      : LongitudinalTrajectory(begin_s, begin_v, begin_t){};
+      : LongitudinalTrajectory(begin_s, begin_v, 0.0, begin_t){};
   Sx at(time_point t) const override;
 };
 
-class SmoothLongitudinalTrajectory : public LongitudinalTrajectory {
-  // No blocking vehicle ahead.  Accelerate to goal speed and maintain.
-  SmoothLongitudinalTrajectory(Sx begin_s, Sv begin_v, time_point begin_t)
-      : LongitudinalTrajectory(begin_s, begin_v, begin_t) {}
+class FollowCarTrajectory : public LongitudinalTrajectory {
   // Blocking vehicle ahead.  Accelerate to goal speed then deccelerate
   // to match speed of blocking vehicle.
-  SmoothLongitudinalTrajectory(
-      Sx begin_s, Sv begin_v, time_point begin_t,
-      const ConstantSpeedLongitudinalTrajectory& blocking_traj)
-      : LongitudinalTrajectory(begin_s, begin_v, begin_t),
-        blocking_(blocking_traj) {}
+  FollowCarTrajectory(Sx begin_s, Sv begin_v, Sa begin_a, time_point begin_t,
+                      const ConstantSpeedLongitudinalTrajectory& blocking_traj);
   Sx at(time_point t) const override;
 
  private:
-  Sx blocked(time_point t) const;
-  boost::optional<ConstantSpeedLongitudinalTrajectory> blocking_;
-  Sx unblocked(time_point t) const;
+  JerkMinimizingTrajectory traj_;
+
+
 };
 
-//class Trajectory {
- //public:
-  //Trajectory(std::unique_ptr<LateralTrajectory> lateral,
-             //std::unique_ptr<LongitudinalTrajectory> longitudinal)
-      //: lateral_(std::move(lateral)), longitduinal_(std::move(longitudinal)) {}
-  //TrajectoryPoint at(time_point t);
+// Accelerate to speed limit and maintain.
+class UnblockedLongitudinalTrajectory : public LongitudinalTrajectory {
+  UnblockedLongitudinalTrajectory(Sx begin_s, Sv begin_v, Sa begin_a,
+                                  time_point begin_t)
+      : LongitudinalTrajectory(begin_s, begin_v, begin_a, begin_t) {}
+  Sx at(time_point t) const override;
+};
 
- //private:
-  //std::unique_ptr<LateralTrajectory> lateral_;
-  //std::unique_ptr<LongitudinalTrajectory> longitundinal_;
-//};
 }  // path_planner

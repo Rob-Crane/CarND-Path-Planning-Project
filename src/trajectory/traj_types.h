@@ -10,9 +10,11 @@ using std::chrono::milliseconds;
 
 using Sx = double;
 using Sv = double;
+using Sa = double;
 
 using Dx = double;
 using Dv = double;
+using Da = double;
 
 //struct Lane {
   //Lane(unsigned id, Dx left, Dx middle, Dx right)
