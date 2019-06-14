@@ -24,7 +24,11 @@ int main() {
   RouteSmoother rs(map.map_waypoints_x,
                    map.map_waypoints_y,
                    map.map_waypoints_s);
-  rs.get_smooth_route(10, 0.01);
-
-
+  std::vector<RouteSegment> route(rs.get_smooth_route(10, 0.10));
+  //for(int i = 0; i < route.size(); ++i) {
+    //std::cout<<float(i)/route.size()<< ", "<<route[i].pt1().route().s()<<std::endl;
+  //}
+  for(int i = 0; i < map.map_waypoints_s.size(); ++i) {
+    std::cout<<float(i)/map.map_waypoints_s.size()<< ", "<<map.map_waypoints_s[i]<<std::endl;
+  }
 }

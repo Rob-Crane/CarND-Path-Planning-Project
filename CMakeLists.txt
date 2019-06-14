@@ -23,9 +23,13 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 
 add_library(routelib ${routelib_src})
+add_executable(routetest src/route/route_test.cpp)
+target_link_libraries(routetest routelib)
+
 add_library(trajlib ${trajlib_src})
 add_executable(trajtest src/trajectory/test.cpp)
 target_link_libraries(trajtest trajlib)
+
 add_executable(path_planning ${planner_src})
 target_link_libraries(path_planning trajlib)
 target_link_libraries(path_planning routelib)

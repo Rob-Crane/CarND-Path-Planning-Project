@@ -50,10 +50,13 @@ int main() {
           double car_yaw = j[1]["yaw"];
           double car_speed = j[1]["speed"];
 
+          std::cout<<"Iniital car: x:" << car_x << ", y:" << car_y << ", s:" << car_s << ", d: " << car_d <<std::endl;
           path_planner::InertialCoordinate ic(car_x, car_y);
           path_planner::TrajectoryPoint tp(ic, rf);
+          std::cout<<"Route : " << tp.route().s() << ", " << tp.route().d() << std::endl;
           path_planner::time_point now = path_planner::steady_clock::now();
           path_planner::RouteCoordinate rc(tp.route());
+          std::cout<<"car speed: " << car_speed << std::endl;
           path_planner::UnblockedLongitudinalTrajectory traj(rc.s(), car_speed,
                                                              0.0, now);
 
@@ -80,9 +83,9 @@ int main() {
                t < path_planner::seconds(2.0);
                t += path_planner::seconds(0.02)) {
             path_planner::RouteCoordinate r(traj.at(t + now), rc.d());
-            std::cout<<"s: " << r.s()<<std::endl;
             path_planner::TrajectoryPoint tp(r, rf);
             path_planner::InertialCoordinate i = tp.inertial();
+            std::cout<<"s: " << r.s()<< " d: " << r.d() << " x: " << i.x() << " y: " << i.y() << std::endl;
             next_x_vals.push_back(i.x());
             next_y_vals.push_back(i.y());
           }

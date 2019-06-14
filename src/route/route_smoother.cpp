@@ -23,15 +23,18 @@ RouteSmoother::RouteSmoother(const std::vector<double>& maps_x,
 std::vector<RouteSegment> RouteSmoother::get_smooth_route(unsigned num_bookend,
                                                           double ds) {
   std::vector<RouteSegment> route;
+  // Number of points used to fit each spline.
   unsigned num_spline = 2 + 2 * num_bookend;
   assert(num_spline <= num_base_);
-  std::vector<Vector2d> printvs;
+  
+  double total_s = base_s_[0]; // running total of S value.
+  // Iterate along each "base segment" of the course route.
   for (int i = 0; i < num_base_; ++i) {
-    // Grab the points before and after the route vector starting
-    // at position i.
+    // Get index of left and right-most spline fit points.
     int left_mod = (i - int(num_bookend)) % int(num_base_);
     unsigned left_bookend = left_mod < 0 ? left_mod + num_base_ : left_mod;
     unsigned right_bookend = (i + 1 + num_bookend) % num_base_;
+    // Fill PointMatrix with fitting points.
     PointMatrix fit_pts(2, num_spline);
     if (right_bookend < left_bookend) {
       fit_pts << base_pts_.block(0, left_bookend, 2, num_base_ - left_bookend),
@@ -40,23 +43,25 @@ std::vector<RouteSegment> RouteSmoother::get_smooth_route(unsigned num_bookend,
       fit_pts << base_pts_.block(0, left_bookend, 2, num_spline);
     }
 
+    // Transform fit points to a coordinate frame around the base segment.
     Vector2d base_begin = base_pts_.col(i);
     Vector2d base_end = base_pts_.col((i + 1) % num_base_);
-    // Get a base vector from route point i to point i+1.
-    Vector2d v =  base_end - base_begin;
+    Vector2d v = base_end - base_begin;
     // Get a projection matrix onto base vector.
     Projection proj(v);
-    // Project fit points onto vector to get in local frame.
     PointMatrix spline_pts = proj.project(fit_pts.colwise() - base_begin);
+
+    // Fit spline to those points.
     auto begin = spline_pts.data();
     auto begin_y = begin + num_spline;
     auto end = begin_y + num_spline;
     std::vector<double> x(begin, begin_y);
     std::vector<double> y(begin_y, end);
-
-    // Fit spline to those points.
     tk::spline s;
     s.set_points(x, y);
+
+    // Use fitted spline to interpolate points along the
+    // base segment.
     double end_x = spline_pts.col(num_bookend + 1)[0];
     int num_interstitials = std::floor(end_x / ds);
     PointMatrix interstitials(2, num_interstitials);
@@ -64,28 +69,31 @@ std::vector<RouteSegment> RouteSmoother::get_smooth_route(unsigned num_bookend,
       Vector2d interstitial;
       double sx = ds * j;
       interstitial << sx, s(sx);
-      interstitials.col(j-1) = interstitial;
+      interstitials.col(j - 1) = interstitial;
     }
     // Transform interstials to global frame.
     PointMatrix global_interstitials =
         proj.invert(interstitials).colwise() + base_begin;
     // Add base points to beginning and end.
-    PointMatrix route_pts(2, num_interstitials+2);
+    PointMatrix route_pts(2, num_interstitials + 2);
     route_pts << base_begin, global_interstitials, base_end;
-    for (int j = 0; j < route_pts.cols(); ++j) {
-      Vector2d v = route_pts.col(j);
-      printvs.push_back(v);
+    // Generate Route
+    for (int j = 0; j < route_pts.cols() - 1; ++j) {
+      Vector2d p0 = route_pts.col(j);
+      Vector2d p1 = route_pts.col(j + 1);
+      double ds = (p1 - p0).norm();
+      Waypoint w0(p0[0], p0[1], total_s);
+      total_s += ds;
+      Waypoint w1(p1[0], p1[1], total_s);
+      route.emplace_back(std::move(w0), std::move(w1));
     }
-  }
-  for (int j = 0; j < printvs.size(); ++j) {
-    std::cout<<printvs[j][0] << ", " << printvs[j][1] << std::endl;
   }
   return route;
 }
 
-std::vector<RouteSegment> generate_base_route(
-    const std::vector<double>& maps_x, const std::vector<double>& maps_y,
-    const std::vector<double>& maps_s) {
+std::vector<RouteSegment> generate_route(const std::vector<double>& maps_x,
+                                         const std::vector<double>& maps_y,
+                                         const std::vector<double>& maps_s) {
   std::vector<RouteSegment> route;
 
   // Construct RouteSegments in order.
@@ -105,15 +113,14 @@ std::vector<RouteSegment> generate_base_route(
     y_iter += 1;
     s_iter += 1;
   }
-  // Last segment connnects to first waypoint.
-  Waypoint penultimate(maps_x.back(), maps_y.back(), maps_s.back());
-
-  Eigen::Vector2d diff =
-      penultimate.inertial().pt() - route.front().pt0().inertial().pt();
-  double last_leg_mag = std::sqrt(diff.transpose() * diff);
-  Waypoint last(maps_x.front(), maps_y.front(),
-                penultimate.route().s() + last_leg_mag);
-  route.emplace_back(std::move(penultimate), std::move(last));
+  const Waypoint& last = route.back().pt1();
+  const Waypoint& front = route.front().pt0();
+  double ds = (last.inertial().pt() - front.inertial().pt()).norm();
+  Waypoint w0(last.inertial().x(), last.inertial().y(), last.route().s());
+  Waypoint w1(front.inertial().x(), front.inertial().y(),
+              last.route().s() + ds);
+  route.emplace_back(std::move(w0), std::move(w1));
   return route;
 }
+
 }  // path_planner
