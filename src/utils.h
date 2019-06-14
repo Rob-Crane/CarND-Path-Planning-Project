@@ -5,8 +5,6 @@
 #include <string>
 #include <vector>
 
-#include "traj_types.h"
-
 using std::string;
 using std::vector;
 namespace path_planner {
@@ -52,18 +50,18 @@ BasicMap load_map() {
   return ret;
 }
 
-struct ControllerInput {
-  vector<double> next_x_vals;
-  vector<double> next_y_vals;
-};
+//struct ControllerInput {
+  //vector<double> next_x_vals;
+  //vector<double> next_y_vals;
+//};
 
-// Controller (simulator) takes input as x,y vehicle position over a time
-// horizon.
-ControllerInput controller_from_trajectory(const Trajectory& traj,
-                                           std::chrono::time_point begin,
-                                           milliseconds dt,
-                                           milliseconds horizon) {
-  ControllerInput input;
-}
+//// Controller (simulator) takes input as x,y vehicle position over a time
+//// horizon.
+//ControllerInput controller_from_trajectory(const Trajectory& traj,
+                                           //std::chrono::time_point begin,
+                                           //milliseconds dt,
+                                           //milliseconds horizon) {
+  //ControllerInput input;
+//}
 
 }  // path_planner

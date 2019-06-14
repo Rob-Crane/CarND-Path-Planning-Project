@@ -1,5 +1,6 @@
 #include <uWS/uWS.h>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 #include "Eigen-3.3/Eigen/Core"
@@ -8,7 +9,9 @@
 #include "json.hpp"
 #include "utils.h"
 
-#include "traj_types.h"
+#include "route/route_frame.h"
+#include "trajectory/trajectory.h"
+#include "trajectory/types.h"
 
 // for convenience
 using nlohmann::json;
@@ -19,9 +22,12 @@ int main() {
   uWS::Hub h;
 
   path_planner::BasicMap map = path_planner::load_map();
+  std::shared_ptr<path_planner::RouteFrame> rf =
+      std::make_shared<path_planner::RouteFrame>(
+          map.map_waypoints_x, map.map_waypoints_y, map.map_waypoints_s);
 
-  h.onMessage([&map](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
-                     uWS::OpCode opCode) {
+  h.onMessage([&rf](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+                    uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -44,16 +50,23 @@ int main() {
           double car_yaw = j[1]["yaw"];
           double car_speed = j[1]["speed"];
 
-          // Previous path data given to the Planner
-          auto previous_path_x = j[1]["previous_path_x"];
-          auto previous_path_y = j[1]["previous_path_y"];
-          // Previous path's end s and d values
-          double end_path_s = j[1]["end_path_s"];
-          double end_path_d = j[1]["end_path_d"];
+          path_planner::InertialCoordinate ic(car_x, car_y);
+          path_planner::TrajectoryPoint tp(ic, rf);
+          path_planner::time_point now = path_planner::steady_clock::now();
+          path_planner::RouteCoordinate rc(tp.route());
+          path_planner::UnblockedLongitudinalTrajectory traj(rc.s(), car_speed,
+                                                             0.0, now);
 
-          // Sensor Fusion Data, a list of all other cars on the same side
-          //   of the road.
-          auto sensor_fusion = j[1]["sensor_fusion"];
+          //// Previous path data given to the Planner
+          // auto previous_path_x = j[1]["previous_path_x"];
+          // auto previous_path_y = j[1]["previous_path_y"];
+          //// Previous path's end s and d values
+          // double end_path_s = j[1]["end_path_s"];
+          // double end_path_d = j[1]["end_path_d"];
+
+          //// Sensor Fusion Data, a list of all other cars on the same side
+          ////   of the road.
+          // auto sensor_fusion = j[1]["sensor_fusion"];
 
           json msgJson;
 
@@ -61,13 +74,22 @@ int main() {
            * TODO: define a path made up of (x,y) points that the car will visit
            *   sequentially every .02 seconds (20ms)
            */
-          Trajectory best_traj = planner.get_best();
-          milliseconds buffer = 0.5;
-          ControllerInput input = controller_from_trajectory(
-              best_traj, steady_clock.now() + transmit_buffer, 20, 5);
+          std::vector<double> next_x_vals;
+          std::vector<double> next_y_vals;
+          for (path_planner::seconds t = path_planner::seconds(0.02);
+               t < path_planner::seconds(2.0);
+               t += path_planner::seconds(0.02)) {
+            path_planner::RouteCoordinate r(traj.at(t + now), rc.d());
+            std::cout<<"s: " << r.s()<<std::endl;
+            path_planner::TrajectoryPoint tp(r, rf);
+            path_planner::InertialCoordinate i = tp.inertial();
+            next_x_vals.push_back(i.x());
+            next_y_vals.push_back(i.y());
+          }
+          std::exit(1);
 
-          msgJson["next_x"] = input.next_x_vals;
-          msgJson["next_y"] = input.next_y_vals;
+          msgJson["next_x"] = next_x_vals;
+          msgJson["next_y"] = next_y_vals;
 
           auto msg = "42[\"control\"," + msgJson.dump() + "]";
 
