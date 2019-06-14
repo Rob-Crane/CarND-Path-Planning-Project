@@ -21,6 +21,11 @@ class LateralTrajectory {
   time_point begin_t_;
 };
 
+enum class LaneChangeDirection {
+  LEFT,
+  RIGHT
+};
+
 // Maintain constant lateral velocity until next lane mid point reached.
 class ConstantSpeedLateralTrajectory : public LateralTrajectory {
  public:
@@ -31,6 +36,14 @@ class ConstantSpeedLateralTrajectory : public LateralTrajectory {
 
  private:
   Dv begin_v_;
+};
+
+class SmoothLateralTrajectory : public LateralTrajectory {
+public:
+  SmoothLateralTrajectory(Dx begin_d, time_point begin_t, LaneChangeDirection dir);
+  Dx at(time_point t) const override;
+ private:
+  JerkMinimizingTrajectory traj_;
 };
 
 // Follow a jerk-minimizing lateral trajectory to target lane.
@@ -74,8 +87,6 @@ class FollowCarTrajectory : public LongitudinalTrajectory {
 
  private:
   JerkMinimizingTrajectory traj_;
-
-
 };
 
 // Accelerate to speed limit and maintain.
@@ -84,6 +95,8 @@ class UnblockedLongitudinalTrajectory : public LongitudinalTrajectory {
                                   time_point begin_t)
       : LongitudinalTrajectory(begin_s, begin_v, begin_a, begin_t) {}
   Sx at(time_point t) const override;
+private:
+JerkMinimizingTrajectory traj_;
 };
 
 }  // path_planner

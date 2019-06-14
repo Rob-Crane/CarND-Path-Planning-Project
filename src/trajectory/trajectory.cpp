@@ -28,6 +28,27 @@ Sx ConstantSpeedLongitudinalTrajectory::at(time_point t) const {
   return begin_s() + dur.count() * begin_v();
 }
 
+constexpr double kLaneWidth = 2.0;
+constexpr double kLaneChangeTime = 3.0;
+SmoothLateralTrajectory::SmoothLateralTrajectory(Dx begin_d, time_point begin_t, LaneChangeDirection dir) {
+  KinematicPoint curr(begin_d(), 0.0, 0.0, begin_t());
+  Dx end_d;
+  if (dir == LaneChangedirection::left) {
+    end_d = prev_lane_midpoint(begin_d());
+  } else {
+    end_d = next_lane_midpoint(begin_d());
+  }
+  time_point end_t = begin_t() + seconds(kLaneChangeTime);
+  KinematicPoint end(end_d, 0.0, 0.0, end_t);
+  traj_ = JerkMinimizingTrajectory(curr, end);
+}
+
+Dx SmoothLateralTrajectory::at(time_point t) const {
+  assert(t > begin_t());
+  KinematicPoint p = traj_(t);
+  return p.x_;
+}
+
 constexpr double kAvgDecel = -5.0;
 constexpr double kAvgAccel = 4.0;
 constexpr double kVClose = 30.0;
@@ -46,7 +67,7 @@ FollowCarTrajectory::FollowCarTrajectory(
     KinematicPoint blocking(blocking_traj.begin_s(), blocking_traj.begin_v(),
                             blocking_traj.begin_a(), blocking_traj.begin_t());
     KinematicPoint intercept =
-        get_time_to_target(curr, blocking, kAvgAccel, kAvgDecel, kVClose,
+        steady_state_follow_estimate(curr, blocking, kAvgAccel, kAvgDecel, kVClose,
                            kMaintainDistance, kNominalCloseTime);
     traj_ = JerkMinimizingTrajectory(curr, intercept);
   }
@@ -57,9 +78,19 @@ FollowCarTrajectory::FollowCarTrajectory(
     return p.x_;
   }
 
-  // double slowdown_time = blocking->begin_v() - begin_v() / kAvgDecel;
-  // assert(slowdown_time > 0);
-  // double slowdown_distance = begin_v() * slowdown_time +
-  // 0.5 * kAvgDecel * slowdown_time * slowdown_time;
+constexpr double dVMax = 30.0;
+UnblockedLongitudinalTrajectory:UnblockedLongitudinalTrajectory(
+Sx begin_s, Sv begin_v, Sa begin_a, time_point begin_t) {
+  KinematicPoint curr(begin_s(), begin_v(), begin_a(), begin_t());
+  KinematicPoint steady = steady_state_max_speed_estimate(curr, kAvgAccel, kVMax);
+  traj_ = JerkMinimizingTrajectory(curr, steady);
+}
 
-  }  // path_planner
+Sx UnblockedLongitudinalTrajectory::at(time_point t) {
+assert(t > begin_t());
+KinematicPoint p = traj_(t);
+return p.x_;
+}
+
+
+}  // path_planner
