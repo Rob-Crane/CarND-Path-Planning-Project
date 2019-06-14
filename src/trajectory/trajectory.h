@@ -9,17 +9,7 @@
 
 namespace path_planner {
 
-// One-dimensional kinematics state..
-struct KinematicPoint {
-  KinematicPoint() = default;
-  KinematicPoint(double x, double v, double a, time_point t)
-      : x_(x), v_(v), a_(a), t_(t) {}
-  double x_;
-  double v_;
-  double a_;
-  time_point t_;
-};
-
+// TODO - for trajectories that use this, create flag for stale/finished.
 class JerkMinimizingTrajectory {
  public:
   JerkMinimizingTrajectory() = default;
@@ -97,6 +87,7 @@ class ConstantSpeedLongitudinalTrajectory : public LongitudinalTrajectory {
 };
 
 class FollowCarTrajectory : public LongitudinalTrajectory {
+ public:
   // Blocking vehicle ahead.  Accelerate to goal speed then deccelerate
   // to match speed of blocking vehicle.
   FollowCarTrajectory(Sx beg_s, Sv beg_v, Sa beg_a, time_point beg_t,
@@ -109,6 +100,7 @@ class FollowCarTrajectory : public LongitudinalTrajectory {
 
 // Accelerate to speed limit and maintain.
 class UnblockedLongitudinalTrajectory : public LongitudinalTrajectory {
+ public:
   UnblockedLongitudinalTrajectory(Sx beg_s, Sv beg_v, Sa beg_a,
                                   time_point beg_t);
   Sx at(time_point t) const override;

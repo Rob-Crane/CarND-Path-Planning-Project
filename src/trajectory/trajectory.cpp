@@ -4,19 +4,21 @@
 #include <cassert>
 #include <cmath>
 
+#include <iostream>
+
 namespace path_planner {
 
 // Config section
 constexpr double kRouteLength = 6945.554;
-constexpr double kLaneWidth = 2.0;
+constexpr double kLaneWidth = 2.001;
 constexpr unsigned kMaxLane = 4;         // index of right most lane.
-constexpr double kLaneChangeTime = 3.0;  // Time to execute a lane change.
-constexpr double kAvgDecel = -5.0;       // Est. braking accel
-constexpr double kAvgAccel = 4.0;        // Est. avg accel to leading veh.
-constexpr double kVClose = 30.0;         // Est. speed to close to leading veh.
-constexpr double kMaintainDistance = 10.0;  // Following distance
-constexpr double kNominalCloseTime = 5.0;   // Near-ego time-to-close
-constexpr double kVMax = 30.0;              // Speed limit
+constexpr double kLaneChangeTime = 3.2;  // Time to execute a lane change.
+constexpr double kAvgDecel = -5.1;       // Est. braking accel
+constexpr double kAvgAccel = 4.11;        // Est. avg accel to leading veh.
+constexpr double kVClose = 29.9;         // Est. speed to close to leading veh.
+constexpr double kMaintainDistance = 10.1;  // Following distance
+constexpr double kNominalCloseTime = 5.2;   // Near-ego time-to-close
+constexpr double kVMax = 30.01;              // Speed limit
 
 JerkMinimizingTrajectory::JerkMinimizingTrajectory(const KinematicPoint& p0,
                                                    const KinematicPoint& p1)
@@ -36,6 +38,7 @@ KinematicPoint JerkMinimizingTrajectory::operator()(time_point t) const {
   ret.x_ = p0_.x_ + p0_.v_ * dt + p0_.a_ * dt * dt + smoothing[0];
   ret.v_ = p0_.v_ + p0_.v_ * dt + smoothing[1];
   ret.a_ = p0_.a_ + smoothing[2];
+  ret.t_ = t;
   return ret;
 }
 
@@ -85,8 +88,6 @@ FollowCarTrajectory::FollowCarTrajectory(
     Sx beg_s, Sv beg_v, Sa beg_a, time_point beg_t,
     const ConstantSpeedLongitudinalTrajectory& blocking_traj)
     : LongitudinalTrajectory(beg_s, beg_v, beg_a, beg_t) {
-  assert(blocking_traj.begin_t() ==
-         begin_t());  // Verify trajectories generated from current time base.
   KinematicPoint curr(begin_s(), begin_v(), begin_a(), begin_t());
   KinematicPoint blocking(blocking_traj.begin_s(), blocking_traj.begin_v(),
                           blocking_traj.begin_a(), blocking_traj.begin_t());
