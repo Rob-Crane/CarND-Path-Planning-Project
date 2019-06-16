@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <iostream>
 namespace path_planner {
 
 Dx next_lane_midpoint(Dx x, const double kLaneWidth, const int kMaxLane) {
@@ -58,6 +59,8 @@ KinematicPoint steady_state_max_speed_estimate(KinematicPoint p0, double a_acc,
                                                double vmax) {
   assert(a_acc > 0);
   assert(vmax > 0);
+  constexpr double kVmaxBuffer = 0.5;
+  assert(p0.v_<vmax+kVmaxBuffer);
   double Ta = (vmax - p0.v_) / a_acc;
   KinematicPoint ret;
   ret.x_ = p0.x_ + p0.v_ * Ta + 0.5 * a_acc * Ta * Ta;

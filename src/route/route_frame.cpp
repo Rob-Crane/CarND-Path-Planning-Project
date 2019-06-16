@@ -8,9 +8,7 @@ namespace path_planner {
 InertialCoordinate TrajectoryPoint::inertial() const {
   if (!opt_inertial_pt_) {
     assert(opt_route_pt_);
-    InertialCoordinate inertial;
-    // route_frame_->to_inertial(opt_route_pt_.value(), inertial);
-    opt_inertial_pt_ = std::move(inertial);
+    opt_inertial_pt_ = route_frame_->to_inertial(opt_route_pt_.value());
   }
   return opt_inertial_pt_.get();
 }
@@ -18,7 +16,6 @@ InertialCoordinate TrajectoryPoint::inertial() const {
 RouteCoordinate TrajectoryPoint::route() const {
   if (!opt_route_pt_) {
     assert(opt_inertial_pt_);
-    RouteCoordinate route_pt;
     opt_route_pt_ = route_frame_->to_route(opt_inertial_pt_.value());
   }
   return opt_route_pt_.get();
@@ -37,7 +34,5 @@ boost::optional<RouteCoordinate> RouteFrame::to_route(
 InertialCoordinate RouteFrame::to_inertial(const RouteCoordinate& route_pt) {
   RouteSegment closest_segment = lane_index_.closest(route_pt);
   return closest_segment.to_inertial(route_pt);
-
-
 }
 }  // path_planner

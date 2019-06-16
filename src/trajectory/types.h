@@ -6,7 +6,7 @@ namespace path_planner {
 using std::chrono::steady_clock;
 using seconds = std::chrono::duration<double>;
 using time_point = std::chrono::time_point<steady_clock, seconds>;
-using std::chrono::milliseconds;
+using milliseconds = std::chrono::duration<double, std::milli>;
 
 using Sx = double;
 using Sv = double;

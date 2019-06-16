@@ -9,6 +9,7 @@ using std::string;
 using std::vector;
 namespace path_planner {
 
+
 struct BasicMap {
   // Load up map values for waypoint's x,y,s and d normalized normal vectors
   vector<double> map_waypoints_x;
@@ -49,6 +50,7 @@ BasicMap load_map() {
   }
   return ret;
 }
+
 
 //struct ControllerInput {
   //vector<double> next_x_vals;

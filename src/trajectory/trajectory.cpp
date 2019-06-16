@@ -14,11 +14,11 @@ constexpr double kLaneWidth = 2.001;
 constexpr unsigned kMaxLane = 4;         // index of right most lane.
 constexpr double kLaneChangeTime = 3.2;  // Time to execute a lane change.
 constexpr double kAvgDecel = -5.1;       // Est. braking accel
-constexpr double kAvgAccel = 4.11;        // Est. avg accel to leading veh.
+constexpr double kAvgAccel = 1.9;        // Est. avg accel to leading veh.
 constexpr double kVClose = 29.9;         // Est. speed to close to leading veh.
 constexpr double kMaintainDistance = 10.1;  // Following distance
 constexpr double kNominalCloseTime = 5.2;   // Near-ego time-to-close
-constexpr double kVMax = 30.01;              // Speed limit
+constexpr double kVMax = 19.00;             // Speed limit
 
 JerkMinimizingTrajectory::JerkMinimizingTrajectory(const KinematicPoint& p0,
                                                    const KinematicPoint& p1)
@@ -36,31 +36,33 @@ KinematicPoint JerkMinimizingTrajectory::operator()(time_point t) const {
   Eigen::Vector3d smoothing = get_tmat(dt) * coef_;
   KinematicPoint ret;
   ret.x_ = p0_.x_ + p0_.v_ * dt + p0_.a_ * dt * dt + smoothing[0];
-  ret.v_ = p0_.v_ + p0_.v_ * dt + smoothing[1];
+  ret.v_ = p0_.v_ + p0_.a_ * dt + smoothing[1];
   ret.a_ = p0_.a_ + smoothing[2];
   ret.t_ = t;
   return ret;
 }
 
-Dx ConstantSpeedLateralTrajectory::at(time_point t) const {
+KinematicPoint ConstantSpeedLateralTrajectory::at(time_point t) const {
   assert(t >= begin_t());
   // Special case (stay in lane)
   if (begin_v() == 0.0) {
-    return begin_d();
+    return KinematicPoint(begin_d(), begin_v(), 0.0, t);
   }
   seconds dur = t - begin_t();
   Dx x = begin_d() + dur.count() * begin_v();
+  Dx dx;
   if (begin_v() < 0.0) {
-    return std::max(x, prev_lane_midpoint(x, kLaneWidth));
+    dx = std::max(x, prev_lane_midpoint(x, kLaneWidth));
   } else {
-    return std::min(x, next_lane_midpoint(x, kLaneWidth, kMaxLane));
+    dx = std::min(x, next_lane_midpoint(x, kLaneWidth, kMaxLane));
   }
+  return KinematicPoint(dx, begin_v(), 0.0, t);
 }
 
-Sx ConstantSpeedLongitudinalTrajectory::at(time_point t) const {
+KinematicPoint ConstantSpeedLongitudinalTrajectory::at(time_point t) const {
   assert(t >= begin_t());
   seconds dur = t - begin_t();
-  return begin_s() + dur.count() * begin_v();
+  return KinematicPoint(begin_s() + dur.count() * begin_v(), begin_v(), 0.0, t);
 }
 
 SmoothLateralTrajectory::SmoothLateralTrajectory(Dx beg_d, time_point beg_t,
@@ -78,10 +80,10 @@ SmoothLateralTrajectory::SmoothLateralTrajectory(Dx beg_d, time_point beg_t,
   traj_ = JerkMinimizingTrajectory(curr, end);
 }
 
-Dx SmoothLateralTrajectory::at(time_point t) const {
-  assert(t > begin_t());
+KinematicPoint SmoothLateralTrajectory::at(time_point t) const {
+  assert(t >= begin_t());
   KinematicPoint p = traj_(t);
-  return p.x_;
+  return p;
 }
 
 FollowCarTrajectory::FollowCarTrajectory(
@@ -97,10 +99,10 @@ FollowCarTrajectory::FollowCarTrajectory(
   traj_ = JerkMinimizingTrajectory(curr, intercept);
 }
 
-Sx FollowCarTrajectory::at(time_point t) const {
-  assert(t > begin_t());
+KinematicPoint FollowCarTrajectory::at(time_point t) const {
+  assert(t >= begin_t());
   KinematicPoint p = traj_(t);
-  return p.x_;
+  return p;
 }
 
 UnblockedLongitudinalTrajectory::UnblockedLongitudinalTrajectory(
@@ -110,12 +112,20 @@ UnblockedLongitudinalTrajectory::UnblockedLongitudinalTrajectory(
   KinematicPoint steady =
       steady_state_max_speed_estimate(curr, kAvgAccel, kVMax);
   traj_ = JerkMinimizingTrajectory(curr, steady);
+  std::cout << "Expected steady state: s: " << steady.x_ << " v: " << steady.v_
+            << " a: " << steady.a_ << " t: " << steady.t_.time_since_epoch().count() << std::endl;
+  steady_ =
+      ConstantSpeedLongitudinalTrajectory(steady.x_, steady.v_, steady.t_);
 }
 
-Sx UnblockedLongitudinalTrajectory::at(time_point t) const {
-  assert(t > begin_t());
+KinematicPoint UnblockedLongitudinalTrajectory::at(time_point t) const {
+  assert(t >= begin_t());
+  if (t >= steady_.begin_t()) {
+    return steady_.at(t);
+  }
   KinematicPoint p = traj_(t);
-  return p.x_;
+  std::cout<<"Actual s: " << p.x_<< " v: " << p.v_<< " a: " << p.a_ << " t: " << p.t_.time_since_epoch().count()<<std::endl;
+  return p;
 }
 
 }  // path_planner
