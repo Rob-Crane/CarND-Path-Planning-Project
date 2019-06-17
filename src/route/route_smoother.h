@@ -20,8 +20,9 @@ class RouteSmoother {
   // base segment have the same S value as those passed in maps_s.
   std::vector<RouteSegment> get_smooth_route(unsigned num_bookend, double ds);
 
-      private : const unsigned num_base_;  // n (number of coarse points)
-  PointMatrix base_pts_;                   // 2xn matrix of course points.
+ private:
+  const unsigned num_base_;  // n (number of coarse points)
+  PointMatrix base_pts_;     // 2xn matrix of course points.
   const std::vector<double> base_s_;
 };
 

@@ -35,4 +35,5 @@ InertialCoordinate RouteFrame::to_inertial(const RouteCoordinate& route_pt) {
   RouteSegment closest_segment = lane_index_.closest(route_pt);
   return closest_segment.to_inertial(route_pt);
 }
+
 }  // path_planner

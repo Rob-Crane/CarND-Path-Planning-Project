@@ -4,7 +4,7 @@
 #include <cmath>
 #include <unordered_set>
 
-#include <iostream>
+#include "route_smoother.h"
 
 namespace path_planner {
 
@@ -17,7 +17,6 @@ RouteIndex::RouteIndex(const std::vector<RouteSegment>& route) {
 }
 
 size_t RouteIndex::get_segment_ind(double s) const {
-
   double route_end = segment_ends_.back().first;
   auto comp = [](const SegmentPair& p1, const SegmentPair& p2) {
     return p1.first < p2.first;
@@ -32,37 +31,8 @@ size_t RouteIndex::get_segment_ind(double s) const {
 KDTreeRouteSegmentIndex::KDTreeRouteSegmentIndex(
     const std::vector<double>& maps_x, const std::vector<double>& maps_y,
     const std::vector<double>& maps_s) {
-  // Ensure at least two points and input same length.
-  assert(maps_x.size() == maps_y.size());
-  assert(maps_y.size() == maps_s.size());
-  assert(maps_x.size() > 1);
-
-  // Construct RouteSegments in order.
-  auto x_iter = maps_x.cbegin() + 1;
-  auto y_iter = maps_y.cbegin() + 1;
-  auto s_iter = maps_s.cbegin() + 1;
-  double last_s = maps_s.front();
-  while (x_iter != maps_x.cend()) {
-    // Assert points are given in increasing-s order.
-    assert(last_s < *s_iter);
-    last_s = *s_iter;
-
-    Waypoint wp1(*(x_iter - 1), *(y_iter - 1), *(s_iter - 1));
-    Waypoint wp2(*x_iter, *y_iter, *s_iter);
-    route_.emplace_back(std::move(wp1), std::move(wp2));
-    x_iter += 1;
-    y_iter += 1;
-    s_iter += 1;
-  }
-  // Last segment connnects to first waypoint.
-  Waypoint penultimate(maps_x.back(), maps_y.back(), maps_s.back());
-
-  Eigen::Vector2d diff =
-      penultimate.inertial().pt() - route_.front().pt0().inertial().pt();
-  double last_leg_mag = std::sqrt(diff.transpose() * diff);
-  Waypoint last(maps_x.front(), maps_y.front(),
-                penultimate.route().s() + last_leg_mag);
-  route_.emplace_back(std::move(penultimate), std::move(last));
+  RouteSmoother smoother(maps_x, maps_y, maps_s);
+  route_ = smoother.get_smooth_route(10, 0.1);
 
   // Construct RouteIndex.
   route_index_ = RouteIndex(route_);
