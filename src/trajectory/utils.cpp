@@ -2,14 +2,18 @@
 #include <iostream>
 namespace path_planner {
 
+int lane_number(Dx x, const double kLaneWidth) {
+  return std::floor(x / kLaneWidth);
+}
+
 Dx next_lane_midpoint(Dx x, const double kLaneWidth, const int kMaxLane) {
-  int current_lane = std::floor(x / kLaneWidth);
+  int current_lane = lane_number(x, kLaneWidth);
   int next_lane = std::min(kMaxLane, current_lane + 1);
   return 2.0 + next_lane * kLaneWidth;
 }
 
 Dx prev_lane_midpoint(Dx x, const double kLaneWidth) {
-  int current_lane = std::floor(x / kLaneWidth);
+  int current_lane = lane_number(x, kLaneWidth);
   int prev_lane = std::max(0, current_lane - 1);
   return 2.0 + prev_lane * kLaneWidth;
 }

@@ -10,22 +10,22 @@ using Eigen::Matrix2d;
 using Eigen::Vector2d;
 using PointMatrix = Eigen::Matrix<double, 2, Eigen::Dynamic, Eigen::RowMajor>;
 
-struct InertialCoordinate {
-  InertialCoordinate() = default;
-  InertialCoordinate(double x, double y);
-  InertialCoordinate(const Vector2d& pt) : pt_(pt) {}
-  InertialCoordinate(Vector2d&& pt) : pt_(pt){};
+struct InertialVector {
+  InertialVector() = default;
+  InertialVector(double x, double y);
+  InertialVector(const Vector2d& pt) : pt_(pt) {}
+  InertialVector(Vector2d&& pt) : pt_(pt){};
   const Vector2d& pt() const { return pt_; }
   double x() const { return pt_[0]; }
   double y() const { return pt_[1]; }
   Vector2d pt_;
 };
 
-struct RouteCoordinate {
-  RouteCoordinate() = default;
-  RouteCoordinate(double s, double d);
-  RouteCoordinate(const Vector2d& pt) : pt_(pt) {}
-  RouteCoordinate(Vector2d&& pt) : pt_(pt) {}
+struct RouteVector {
+  RouteVector() = default;
+  RouteVector(double s, double d);
+  RouteVector(const Vector2d& pt) : pt_(pt) {}
+  RouteVector(Vector2d&& pt) : pt_(pt) {}
   const Vector2d& pt() const { return pt_; }
   double s() const { return pt_[0]; }
   double d() const { return pt_[1]; }
@@ -34,20 +34,20 @@ struct RouteCoordinate {
 
 class Point {
  public:
-  virtual InertialCoordinate inertial() const = 0;
-  virtual RouteCoordinate route() const = 0;
+  virtual InertialVector inertial() const = 0;
+  virtual RouteVector route() const = 0;
 };
 
 class Waypoint : public Point {
  public:
   Waypoint() = default;
   Waypoint(double x, double y, double s) : inertial_(x, y), route_(s, 0){};
-  InertialCoordinate inertial() const final { return inertial_; }
-  RouteCoordinate route() const final { return route_; }
+  InertialVector inertial() const final { return inertial_; }
+  RouteVector route() const final { return route_; }
 
  private:
-  InertialCoordinate inertial_;
-  RouteCoordinate route_;
+  InertialVector inertial_;
+  RouteVector route_;
 };
 
 
@@ -71,7 +71,7 @@ class Projection {
   Matrix2d proj_;  // Projection onto v.
 };
 
-class RouteSegment : protected Projection {
+class RouteSegment : public Projection {
  public:
   RouteSegment() = default;
   RouteSegment(const Waypoint& pt0, const Waypoint& pt1)
@@ -81,8 +81,8 @@ class RouteSegment : protected Projection {
 
   const Waypoint& pt0() const { return pt0_; }
   const Waypoint& pt1() const { return pt1_; }
-  boost::optional<RouteCoordinate> to_route(const InertialCoordinate& p) const;
-  InertialCoordinate to_inertial(const RouteCoordinate& p) const;
+  boost::optional<RouteVector> to_route(const InertialVector& p) const;
+  InertialVector to_inertial(const RouteVector& p) const;
 
  private:
   Waypoint pt0_;

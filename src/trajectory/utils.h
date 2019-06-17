@@ -8,6 +8,7 @@
 
 namespace path_planner {
 
+int lane_number(Dx x, const double kLaneWidth);
 Dx next_lane_midpoint(Dx x, const double kLaneWidth, const int kMaxLane);
 Dx prev_lane_midpoint(Dx x, const double kLaneWidth);
 

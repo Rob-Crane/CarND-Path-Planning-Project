@@ -28,10 +28,10 @@ class KDTreeRouteSegmentIndex {
                           const std::vector<double>& maps_s);
 
   // Query for route segment nearest inertial query point.
-  bool closest(const InertialCoordinate& query_pt, RouteCoordinate& ret_pt,
+  bool closest(const InertialVector& query_pt, RouteVector& ret_pt,
                RouteSegment& ret_seg) const;
   // Query for route segment nearest route query point.
-  RouteSegment closest(const RouteCoordinate& query_pt) const;
+  RouteSegment closest(const RouteVector& query_pt) const;
 
   // Interface expected for DatasetAdapter
   inline size_t kdtree_get_point_count() const { return route_.size(); }

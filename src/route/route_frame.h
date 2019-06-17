@@ -8,12 +8,10 @@
 #include "Eigen-3.3/Eigen/Dense"
 #include "boost/optional.hpp"
 
-#include "route_types.h"
 #include "route_index.h"
+#include "route_types.h"
 
 namespace path_planner {
-
-using Eigen::Vector2d;
 
 class RouteFrame;
 using RouteFramePtr = std::shared_ptr<RouteFrame>;
@@ -22,19 +20,33 @@ using RouteIter = std::vector<RouteSegment>::const_iterator;
 class TrajectoryPoint {
  public:
   TrajectoryPoint() = delete;
-  TrajectoryPoint(const InertialCoordinate& inertial_pt,
-                  RouteFramePtr route_frame)
+  TrajectoryPoint(const InertialVector& inertial_pt, RouteFramePtr route_frame)
       : opt_inertial_pt_(inertial_pt), route_frame_(std::move(route_frame)) {}
-  TrajectoryPoint(const RouteCoordinate& route_pt, RouteFramePtr route_frame)
+  TrajectoryPoint(const RouteVector& route_pt, RouteFramePtr route_frame)
       : opt_route_pt_(route_pt), route_frame_(std::move(route_frame)) {}
 
-  InertialCoordinate inertial() const;
-  RouteCoordinate route() const;
+  InertialVector inertial() const;
+  RouteVector route() const;
+
+ protected:
+  RouteFramePtr route_frame_;
+  mutable boost::optional<InertialVector> opt_inertial_pt_;
+  mutable boost::optional<RouteVector> opt_route_pt_;
+  mutable boost::optional<RouteSegment> opt_route_segment_;
+};
+
+class TrajectoryVelocity : public TrajectoryPoint {
+ public:
+  TrajectoryVelocity(const InertialVector& inertial_pt,
+                     const InertialVector inertial_v, RouteFramePtr route_frame)
+      : TrajectoryPoint(inertial_pt, std::move(route_frame)),
+        opt_inertial_v_(inertial_v) {}
+
+  RouteVector routeV() const;
 
  private:
-  RouteFramePtr route_frame_;
-  mutable boost::optional<InertialCoordinate> opt_inertial_pt_;
-  mutable boost::optional<RouteCoordinate> opt_route_pt_;
+  mutable boost::optional<InertialVector> opt_inertial_v_;
+  mutable boost::optional<RouteVector> opt_route_v_;
 };
 
 class RouteFrame {
@@ -49,9 +61,12 @@ class RouteFrame {
     return std::make_shared<RouteFrame>(maps_x, maps_y, maps_s);
   }
 
-  boost::optional<RouteCoordinate> to_route(
-      const InertialCoordinate& inertial_pt);
-  InertialCoordinate to_inertial(const RouteCoordinate& route_pt);
+  struct RouteResult {
+    RouteVector vector_;    // coordinate
+    RouteSegment segment_;  // route (road) primitive
+  };
+  boost::optional<RouteResult> to_route(const InertialVector& inertial_pt);
+  InertialVector to_inertial(const RouteVector& route_pt);
 
  private:
   KDTreeRouteSegmentIndex lane_index_;

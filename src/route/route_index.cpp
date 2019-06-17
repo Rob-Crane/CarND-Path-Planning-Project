@@ -32,7 +32,9 @@ KDTreeRouteSegmentIndex::KDTreeRouteSegmentIndex(
     const std::vector<double>& maps_x, const std::vector<double>& maps_y,
     const std::vector<double>& maps_s) {
   RouteSmoother smoother(maps_x, maps_y, maps_s);
-  route_ = smoother.get_smooth_route(10, 0.1);
+  const unsigned num_bookend = 10;
+  const double ds = 0.1;
+  route_ = smoother.get_smooth_route(num_bookend, ds);
 
   // Construct RouteIndex.
   route_index_ = RouteIndex(route_);
@@ -44,8 +46,8 @@ KDTreeRouteSegmentIndex::KDTreeRouteSegmentIndex(
   inertial_index_->buildIndex();
 }
 
-bool KDTreeRouteSegmentIndex::closest(const InertialCoordinate& query_pt,
-                                      RouteCoordinate& ret_pt,
+bool KDTreeRouteSegmentIndex::closest(const InertialVector& query_pt,
+                                      RouteVector& ret_pt,
                                       RouteSegment& ret_seg) const {
   // Query for the nearest_n segment endpoints.
   constexpr size_t nearest_n = 4;
@@ -61,7 +63,7 @@ bool KDTreeRouteSegmentIndex::closest(const InertialCoordinate& query_pt,
   constexpr double kMaxDouble(std::numeric_limits<double>::max());
   double min_d = kMaxDouble;
   auto best_segment = ret_indexes.cend();
-  RouteCoordinate best_pt;
+  RouteVector best_pt;
   for (auto it = ret_indexes.cbegin(); it != ret_indexes.cend(); ++it) {
     const RouteSegment& segment(route_[*it]);
     auto opt_route_pt(segment.to_route(query_pt));
@@ -81,7 +83,7 @@ bool KDTreeRouteSegmentIndex::closest(const InertialCoordinate& query_pt,
 }
 
 RouteSegment KDTreeRouteSegmentIndex::closest(
-    const RouteCoordinate& query_pt) const {
+    const RouteVector& query_pt) const {
   size_t ind = route_index_.get_segment_ind(query_pt.s());
   assert(ind < route_.size());
   return route_[ind];

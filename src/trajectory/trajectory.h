@@ -112,4 +112,9 @@ class UnblockedLongitudinalTrajectory : public LongitudinalTrajectory {
   ConstantSpeedLongitudinalTrajectory steady_;
 };
 
+struct Trajectory {
+    std::unique_ptr<LateralTrajectory> lateral_;
+    std::unique_ptr<LongitudinalTrajectory longitudinal_;
+};
+
 }  // path_planner
