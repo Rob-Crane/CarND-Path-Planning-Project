@@ -8,13 +8,10 @@ Trajectory Decision::plan(const std::vector<AdversaryObservation> adversaries) {
   TrajectoryPoint curr_pos(egoPos, routeFrame);
   // Find current position in last trajectory.
   int i = 0;
-  while (i < last_trajectory.size() &&
-         last_trajectory[i].s() < curr_pos.route().s()) {
-    ++i;
-  }
+  for(;i < last_trajectory.size() &&
+         last_trajectory[i].s() < curr_pos.route().s(); ++i) {}
   std::vector<TrajectoryState> new_trajectory;
-  int j;
-  for (j = std::max(i - 1, 0); j < last_trajectory.size() && j < i + kBuffer;
+  for (int j = std::max(i - 1, 0);j < last_trajectory.size() && j < i + kBuffer;
        ++j) {
     new_trajectory.push_back(last_trajectory[j]);
   }
