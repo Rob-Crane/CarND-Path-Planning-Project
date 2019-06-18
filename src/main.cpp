@@ -7,7 +7,6 @@
 #include "Eigen-3.3/Eigen/QR"
 #include "helpers.h"
 #include "json.hpp"
-#include "types.h"
 #include "utils.h"
 
 #include "decision/types.h"
@@ -69,7 +68,6 @@ int run() {
           std::vector<double> next_y_vals;
           std::vector<double> next_s_vals;
 
-          constexpr double kMinSDiff = 0.009;
           last_trajectory.clear();
           for (TrajectoryState& s : new_trajectory) {
             if (!next_s_vals.empty() && s.s() - next_s_vals.back() < kMinSDiff)

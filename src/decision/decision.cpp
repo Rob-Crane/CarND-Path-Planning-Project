@@ -18,7 +18,6 @@ std::vector<TrajectoryState> Decision::plan(
   std::vector<TrajectoryState> new_trajectory;
   for (int j = std::max(i - 1, 0);
        j < last_trajectory_.size() && j < i + kBuffer; ++j) {
-    new_trajectory.push_back(last_trajectory_[j]);
   }
   if (new_trajectory.empty()) {
     new_trajectory.emplace_back(curr_pos, 0.0, 0.0);
@@ -35,6 +34,7 @@ std::vector<TrajectoryState> Decision::plan(
     adversaryTrajectories.emplace_back(position, velocity, route_frame_);
   }
 
+  // TODO add route length to adversary S if ...
   int currentLane = lane_number(ref_state.d());
   const double maxS = std::fmod(ref_state.d()+kAheadFilter,kRouteLength);
   TrajectoryVelocity const* minAhead = nullptr;
@@ -70,6 +70,7 @@ std::vector<TrajectoryState> Decision::plan(
   for (seconds t = seconds(0.02); t <= seconds(1.0); t += seconds(0.02)) {
     KinematicPoint kp(longitudinal_traj->at(t + start_time));
     RouteVector r(kp.x_, ref_state.d());
+    // TODO applty min-S filter here and remove from main.cpp if (r.s() - 
     TrajectoryPoint pt(r, route_frame_);
     new_trajectory.emplace_back(pt, kp.v_, kp.a_);
   }
