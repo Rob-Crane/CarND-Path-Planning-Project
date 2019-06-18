@@ -55,11 +55,11 @@ class RouteFrame {
              const std::vector<double>& maps_y,
              const std::vector<double>& maps_s)
       : lane_index_(maps_x, maps_y, maps_s) {}
-  static RouteFramePtr make(const std::vector<double>& maps_x,
-                            const std::vector<double>& maps_y,
-                            const std::vector<double>& maps_s) {
-    return std::make_shared<RouteFrame>(maps_x, maps_y, maps_s);
-  }
+  //static RouteFramePtr make(const std::vector<double>& maps_x,
+                            //const std::vector<double>& maps_y,
+                            //const std::vector<double>& maps_s) {
+    //return std::make_shared<RouteFrame>(maps_x, maps_y, maps_s);
+  //}
 
   struct RouteResult {
     RouteVector vector_;    // coordinate

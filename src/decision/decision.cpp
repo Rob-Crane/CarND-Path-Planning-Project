@@ -4,16 +4,21 @@
 #include "trajectory/utils.h"
 
 namespace path_planner {
-Trajectory Decision::plan(const std::vector<AdversaryObservation> adversaries) {
-  TrajectoryPoint curr_pos(egoPos, routeFrame);
+
+std::vector<TrajectoryState> Decision::plan(
+    const std::vector<AdversaryObservation> adversaries,
+    InertialVector egoPos) {
+  TrajectoryPoint curr_pos(egoPos, route_frame_);
   // Find current position in last trajectory.
   int i = 0;
-  for(;i < last_trajectory.size() &&
-         last_trajectory[i].s() < curr_pos.route().s(); ++i) {}
+  for (; i < last_trajectory_.size() &&
+         last_trajectory_[i].s() < curr_pos.route().s();
+       ++i) {
+  }
   std::vector<TrajectoryState> new_trajectory;
-  for (int j = std::max(i - 1, 0);j < last_trajectory.size() && j < i + kBuffer;
-       ++j) {
-    new_trajectory.push_back(last_trajectory[j]);
+  for (int j = std::max(i - 1, 0);
+       j < last_trajectory_.size() && j < i + kBuffer; ++j) {
+    new_trajectory.push_back(last_trajectory_[j]);
   }
   if (new_trajectory.empty()) {
     new_trajectory.emplace_back(curr_pos, 0.0, 0.0);
@@ -27,18 +32,18 @@ Trajectory Decision::plan(const std::vector<AdversaryObservation> adversaries) {
   for (const auto& adv : adversaries) {
     InertialVector position(adv.x_, adv.y_);
     InertialVector velocity(adv.dx_, adv.dy_);
-    adversaryTrajectories.push_back((position, velocity, routeFrame);
+    adversaryTrajectories.emplace_back(position, velocity, route_frame_);
   }
 
   int currentLane = lane_number(ref_state.d());
-  const double maxS = std::fmod(ref_state.d()+kAheadFilter),kRouteLength);
-  AdversaryTrajectory* minAhead = nullptr;
+  const double maxS = std::fmod(ref_state.d()+kAheadFilter,kRouteLength);
+  TrajectoryVelocity const* minAhead = nullptr;
   for (const auto adv : adversaryTrajectories) {
     Dx dx = adv.route().d();
     Sx sx = adv.route().s();
     if (lane_number(dx) == currentLane && sx > ref_state.d() && sx < maxS) {
       if (minAhead) {
-        if (dx < minAhead->d()) {
+        if (dx < minAhead->route().d()) {
           minAhead = &adv;
         }
       } else {
@@ -47,16 +52,28 @@ Trajectory Decision::plan(const std::vector<AdversaryObservation> adversaries) {
     }
   }
 
+  // Create longitudinal trajectory from most limiting adversary.
+  time_point start_time = steady_clock::now();
+  std::unique_ptr<LongitudinalTrajectory> longitudinal_traj;
+  if (minAhead) {
+    ConstantSpeedLongitudinalTrajectory blocking(
+        minAhead->route().s(), minAhead->routeV().s(), start_time);
 
-  // Use observations to plan.
-  UnblockedLongitudinalTrajectory traj(ref_state.s(), ref_state.sv(),
-                                       ref_state.sa(), start_time);
-  // Generate longitudinal trajectory.
+    longitudinal_traj = std::make_unique<FollowCarTrajectory>(
+        ref_state.s(), ref_state.sv(), ref_state.sa(), start_time, blocking);
+  } else {
+    longitudinal_traj = std::make_unique<UnblockedLongitudinalTrajectory>(
+        ref_state.s(), ref_state.sv(), ref_state.sa(), start_time);
+  }
+
+  // Sample trajectory points.
   for (seconds t = seconds(0.02); t <= seconds(1.0); t += seconds(0.02)) {
-    KinematicPoint kp(traj.at(t + start_time));
+    KinematicPoint kp(longitudinal_traj->at(t + start_time));
     RouteVector r(kp.x_, ref_state.d());
-    TrajectoryPoint pt(r, routeFrame);
+    TrajectoryPoint pt(r, route_frame_);
     new_trajectory.emplace_back(pt, kp.v_, kp.a_);
   }
+  last_trajectory_ = new_trajectory;
+  return std::move(new_trajectory);
 }
 }  // path_planner

@@ -8,9 +8,9 @@
 
 namespace path_planner {
 
-int lane_number(Dx x, const double kLaneWidth);
-Dx next_lane_midpoint(Dx x, const double kLaneWidth, const int kMaxLane);
-Dx prev_lane_midpoint(Dx x, const double kLaneWidth);
+int lane_number(Dx x);
+Dx next_lane_midpoint(Dx x);
+Dx prev_lane_midpoint(Dx x);
 
 Eigen::Matrix3d get_tmat(double dt);
 

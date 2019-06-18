@@ -10,6 +10,7 @@ set(CMAKE_CXX_FLAGS, "${CXX_FLAGS}")
 set(planner_src src/main.cpp)
 set(routelib_src src/route/route_frame.h src/route/route_index.h src/route/route_smoother.h src/route/route_types.h src/route/route_frame.cpp src/route/route_index.cpp src/route/route_smoother.cpp src/route/route_types.cpp)
 set(trajlib_src src/trajectory/trajectory.cpp src/trajectory/utils.cpp)
+set(decisionlib_src src/decision/decision.cpp)
 
 include_directories(src/)
 
@@ -30,9 +31,12 @@ add_library(trajlib ${trajlib_src})
 add_executable(trajtest src/trajectory/test.cpp)
 target_link_libraries(trajtest trajlib)
 
+add_library(decisionlib ${decisionlib_src})
+
 add_executable(path_planning ${planner_src})
 target_link_libraries(path_planning trajlib)
 target_link_libraries(path_planning routelib)
+target_link_libraries(path_planning decisionlib)
 
 target_link_libraries(path_planning z ssl uv uWS)
 #target_link_libraries(trajlib z ssl uv uWS)

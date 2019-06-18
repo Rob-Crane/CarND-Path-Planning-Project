@@ -4,14 +4,13 @@
 #include <cassert>
 #include <cmath>
 
+#include "config.h"
+
 #include <iostream>
 
 namespace path_planner {
 
 // Config section
-constexpr double kRouteLength = 6945.554;
-constexpr double kLaneWidth = 2.001;
-constexpr unsigned kMaxLane = 4;         // index of right most lane.
 constexpr double kLaneChangeTime = 3.2;  // Time to execute a lane change.
 constexpr double kAvgDecel = -5.1;       // Est. braking accel
 constexpr double kAvgAccel = 1.9;        // Est. avg accel to leading veh.
@@ -52,9 +51,9 @@ KinematicPoint ConstantSpeedLateralTrajectory::at(time_point t) const {
   Dx x = begin_d() + dur.count() * begin_v();
   Dx dx;
   if (begin_v() < 0.0) {
-    dx = std::max(x, prev_lane_midpoint(x, kLaneWidth));
+    dx = std::max(x, prev_lane_midpoint(x));
   } else {
-    dx = std::min(x, next_lane_midpoint(x, kLaneWidth, kMaxLane));
+    dx = std::min(x, next_lane_midpoint(x));
   }
   return KinematicPoint(dx, begin_v(), 0.0, t);
 }
@@ -71,9 +70,9 @@ SmoothLateralTrajectory::SmoothLateralTrajectory(Dx beg_d, time_point beg_t,
   KinematicPoint curr(begin_d(), 0.0, 0.0, begin_t());
   Dx end_d;
   if (dir == LaneChangeDirection::kLeft) {
-    end_d = prev_lane_midpoint(begin_d(), kLaneWidth);
+    end_d = prev_lane_midpoint(begin_d());
   } else {
-    end_d = next_lane_midpoint(begin_d(), kLaneWidth, kMaxLane);
+    end_d = next_lane_midpoint(begin_d());
   }
   time_point end_t = begin_t() + seconds(kLaneChangeTime);
   KinematicPoint end(end_d, 0.0, 0.0, end_t);

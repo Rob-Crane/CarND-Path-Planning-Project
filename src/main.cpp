@@ -29,10 +29,10 @@ int run() {
   std::shared_ptr<RouteFrame> routeFrame = std::make_shared<RouteFrame>(
       map.map_waypoints_x, map.map_waypoints_y, map.map_waypoints_s);
 
-  h.onMessage([&routeFrame, &last_trajectory](uWS::WebSocket<uWS::SERVER> ws,
-                                              char* data, size_t length,
-                                              uWS::OpCode opCode) {
-    time_point start_time = steady_clock::now();
+  Decision decision(routeFrame);
+  h.onMessage([&last_trajectory, &decision](uWS::WebSocket<uWS::SERVER> ws,
+                                            char* data, size_t length,
+                                            uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message
     // event.
     // The 4 signifies a websocket message
@@ -47,7 +47,6 @@ int run() {
 
         if (event == "telemetry") {
           // j[1] is the data JSON object
-          std::cout << "======================" << std::endl;
 
           // Main car's localization Data
           InertialVector egoPos(j[1]["x"], j[1]["y"]);
@@ -62,11 +61,10 @@ int run() {
             adversaries.emplace_back(f[kSenseX], f[kSenseY], f[kSenseDX],
                                      f[kSenseDY]);
           }
+          std::vector<TrajectoryState> = decision.plan(observations, egoPos);
 
           json msgJson;
 
-
-          std::cout << "new_trajectory:" << std::endl;
           std::vector<double> next_x_vals;
           std::vector<double> next_y_vals;
           std::vector<double> next_s_vals;
@@ -84,19 +82,17 @@ int run() {
                       << " y: " << next_y_vals.back() << " sv: " << s.sv()
                       << " sa: " << s.sa() << std::endl;
           }
-          // TODO, add extra kinemetic values to TrajectoryPoint
 
           msgJson["next_x"] = std::move(next_x_vals);
           msgJson["next_y"] = std::move(next_y_vals);
 
           auto msg = "42[\"control\"," + msgJson.dump() + "]";
 
-          // if (car_speed > 23.0) {
-          // std::cout << "Overspeed exit." << std::endl;
-          // std::exit(1);
-          //}
+          if (car_speed > 23.0) {
+            std::cerr << "Overspeed exit." << std::endl;
+            std::exit(1);
+          }
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
-          last_trajectory = std::move(new_trajectory);
         }  // end "telemetry" if
       } else {
         // Manual driving
