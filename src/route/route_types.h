@@ -1,8 +1,7 @@
 #pragma once
 
 #include "Eigen-3.3/Eigen/Dense"
-#include "boost/optional.hpp"
-#include "boost/polygon/polygon.hpp"
+#include "boost/optional/optional.hpp"
 
 namespace path_planner {
 

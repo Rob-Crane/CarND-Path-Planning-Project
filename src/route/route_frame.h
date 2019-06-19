@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "Eigen-3.3/Eigen/Dense"
-#include "boost/optional.hpp"
+#include "boost/optional/optional.hpp"
 
 #include "route_index.h"
 #include "route_types.h"

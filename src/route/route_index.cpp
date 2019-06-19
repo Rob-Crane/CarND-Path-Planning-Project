@@ -41,8 +41,8 @@ KDTreeRouteSegmentIndex::KDTreeRouteSegmentIndex(
 
   // Construct KDTree of segment midpoints.
   constexpr int leafs_max_size = 10;
-  inertial_index_ = std::make_unique<adapter_t>(
-      2, *this, nanoflann::KDTreeSingleIndexAdaptorParams(leafs_max_size));
+  inertial_index_ = std::unique_ptr<adapter_t>(new adapter_t(
+      2, *this, nanoflann::KDTreeSingleIndexAdaptorParams(leafs_max_size)));
   inertial_index_->buildIndex();
 }
 
