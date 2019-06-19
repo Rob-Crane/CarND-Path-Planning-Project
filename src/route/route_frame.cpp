@@ -1,4 +1,5 @@
 #include "route_frame.h"
+#include "utils.h"
 
 #include <cassert>
 #include <limits>
@@ -19,6 +20,9 @@ RouteVector TrajectoryPoint::route() const {
   if (!opt_route_pt_) {
     assert(opt_inertial_pt_);
     auto result = route_frame_->to_route(opt_inertial_pt_.value());
+    if(!result)
+     exitWithStackTrace();
+
     assert(result);
     opt_route_pt_ = result->vector_;
     opt_route_segment_ = result->segment_;

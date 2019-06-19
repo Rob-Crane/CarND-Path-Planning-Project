@@ -1,14 +1,9 @@
 #pragma once
-#include <chrono>
-#include <fstream>
-#include <sstream>
-#include <string>
 #include <vector>
 
-using std::string;
-using std::vector;
 namespace path_planner {
 
+using std::vector;
 
 struct BasicMap {
   // Load up map values for waypoint's x,y,s and d normalized normal vectors
@@ -19,36 +14,8 @@ struct BasicMap {
   vector<double> map_waypoints_dy;
 };
 
-BasicMap load_map() {
-  // Waypoint map to read from
-  string map_file_ = "../data/highway_map.csv";
-  // The max s value before wrapping around the track back to 0
-  double max_s = 6945.554;
+BasicMap load_map();
 
-  std::ifstream in_map_(map_file_.c_str(), std::ifstream::in);
-
-  BasicMap ret;
-
-  string line;
-  while (getline(in_map_, line)) {
-    std::istringstream iss(line);
-    double x;
-    double y;
-    float s;
-    float d_x;
-    float d_y;
-    iss >> x;
-    iss >> y;
-    iss >> s;
-    iss >> d_x;
-    iss >> d_y;
-    ret.map_waypoints_x.push_back(x);
-    ret.map_waypoints_y.push_back(y);
-    ret.map_waypoints_s.push_back(s);
-    ret.map_waypoints_dx.push_back(d_x);
-    ret.map_waypoints_dy.push_back(d_y);
-  }
-  return ret;
-}
+void exitWithStackTrace();
 
 }  // path_planner

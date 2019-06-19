@@ -98,6 +98,7 @@ class FollowCarTrajectory : public LongitudinalTrajectory {
 
  private:
   JerkMinimizingTrajectory traj_;
+  ConstantSpeedLongitudinalTrajectory steady_;
 };
 
 // Accelerate to speed limit and maintain.

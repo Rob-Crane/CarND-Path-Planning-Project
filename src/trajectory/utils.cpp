@@ -3,9 +3,7 @@
 #include "config.h"
 namespace path_planner {
 
-int lane_number(Dx x) {
-  return std::floor(x / kLaneWidth);
-}
+int lane_number(Dx x) { return std::floor(x / kLaneWidth); }
 
 Dx next_lane_midpoint(Dx x) {
   unsigned current_lane = lane_number(x);
@@ -32,8 +30,7 @@ Eigen::Matrix3d get_tmat(double dt) {
 KinematicPoint steady_state_follow_estimate(KinematicPoint p0,
                                             KinematicPoint blocking,
                                             double a_acc, double a_dec,
-                                            double vclose, double xbuff,
-                                            double nominal_intercept) {
+                                            double vclose, double xbuff) {
   assert(p0.x_ < blocking.x_);
   assert(p0.t_ == blocking.t_);
   assert(a_dec < 0);
@@ -47,15 +44,32 @@ KinematicPoint steady_state_follow_estimate(KinematicPoint p0,
       (2.0 * a_acc * a_dec * (blocking.v_ - vclose));
   double Td = (blocking.v_ - vclose) / a_dec;  // time spent decelerating
 
-  double time = nominal_intercept;
-  if (Ta > 0.0 && Tc > 0.0 && Td > 0.0) {
-    time = Ta + Tc + Td;
+  double time = -1.0;
+  if (Ta < 0.0 || Tc < 0.0 || Td < 0.0) {
+    // If entity is close, solve different kinematics equation that
+    // involves a nominal accelaration to vclose followed by deceleration
+    // to blocking entity.
+    double Ta =
+        -(p0.v_ - blocking.v_ +
+          a_dec * std::sqrt((-blocking.v_ * blocking.v_ +
+                             2 * blocking.v_ * p0.v_ - p0.v_ * p0.v_ +
+                             2 * a_acc * (p0.x_ - blocking.x_ + xbuff)) /
+                            (a_dec * (a_acc - a_dec)))) /
+        a_acc;
+    double Td =
+        std::sqrt((-blocking.v_ * blocking.v_ + 2 * blocking.v_ * p0.v_ -
+                   p0.v_ * p0.v_ + 2 * a_acc * (p0.x_ - blocking.x_ + xbuff)) /
+                  (a_dec * (a_acc - a_dec)));
+    assert(Ta > 0);
+    assert(Td > 0);
+    time = Ta + Td;
   }
+  assert(time > 0);
   double x_intercept = blocking.x_ + blocking.v_ * time - xbuff;
   KinematicPoint ret;
   ret.x_ = x_intercept;
-  ret.t_ = p0.t_ + seconds(time);
   ret.v_ = blocking.v_;
+  ret.t_ = p0.t_ + seconds(time);
   ret.a_ = 0.0;
   return ret;
 }
@@ -65,7 +79,7 @@ KinematicPoint steady_state_max_speed_estimate(KinematicPoint p0, double a_acc,
   assert(a_acc > 0);
   assert(vmax > 0);
   constexpr double kVmaxBuffer = 0.5;
-  assert(p0.v_<vmax+kVmaxBuffer);
+  assert(p0.v_ < vmax + kVmaxBuffer);
   double Ta = (vmax - p0.v_) / a_acc;
   KinematicPoint ret;
   ret.x_ = p0.x_ + p0.v_ * Ta + 0.5 * a_acc * Ta * Ta;
@@ -75,4 +89,4 @@ KinematicPoint steady_state_max_speed_estimate(KinematicPoint p0, double a_acc,
   return ret;
 }
 
-} // path_planner
+}  // path_planner

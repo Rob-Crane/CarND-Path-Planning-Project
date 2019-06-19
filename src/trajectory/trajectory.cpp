@@ -16,7 +16,6 @@ constexpr double kAvgDecel = -5.1;       // Est. braking accel
 constexpr double kAvgAccel = 1.9;        // Est. avg accel to leading veh.
 constexpr double kVClose = 29.9;         // Est. speed to close to leading veh.
 constexpr double kMaintainDistance = 10.1;  // Following distance
-constexpr double kNominalCloseTime = 5.2;   // Near-ego time-to-close
 constexpr double kVMax = 19.00;             // Speed limit
 
 JerkMinimizingTrajectory::JerkMinimizingTrajectory(const KinematicPoint& p0,
@@ -93,13 +92,17 @@ FollowCarTrajectory::FollowCarTrajectory(
   KinematicPoint blocking(blocking_traj.begin_s(), blocking_traj.begin_v(),
                           blocking_traj.begin_a(), blocking_traj.begin_t());
   KinematicPoint intercept = steady_state_follow_estimate(
-      curr, blocking, kAvgAccel, kAvgDecel, kVClose, kMaintainDistance,
-      kNominalCloseTime);
+      curr, blocking, kAvgAccel, kAvgDecel, kVClose, kMaintainDistance);
   traj_ = JerkMinimizingTrajectory(curr, intercept);
+  steady_ =
+      ConstantSpeedLongitudinalTrajectory(intercept.x_, intercept.v_, intercept.t_);
 }
 
 KinematicPoint FollowCarTrajectory::at(time_point t) const {
   assert(t >= begin_t());
+  if (t >= steady_.begin_t()) {
+    return steady_.at(t);
+  }
   KinematicPoint p = traj_(t);
   return p;
 }
@@ -111,8 +114,6 @@ UnblockedLongitudinalTrajectory::UnblockedLongitudinalTrajectory(
   KinematicPoint steady =
       steady_state_max_speed_estimate(curr, kAvgAccel, kVMax);
   traj_ = JerkMinimizingTrajectory(curr, steady);
-  std::cout << "Expected steady state: s: " << steady.x_ << " v: " << steady.v_
-            << " a: " << steady.a_ << " t: " << steady.t_.time_since_epoch().count() << std::endl;
   steady_ =
       ConstantSpeedLongitudinalTrajectory(steady.x_, steady.v_, steady.t_);
 }
@@ -123,7 +124,6 @@ KinematicPoint UnblockedLongitudinalTrajectory::at(time_point t) const {
     return steady_.at(t);
   }
   KinematicPoint p = traj_(t);
-  std::cout<<"Actual s: " << p.x_<< " v: " << p.v_<< " a: " << p.a_ << " t: " << p.t_.time_since_epoch().count()<<std::endl;
   return p;
 }
 

@@ -21,8 +21,7 @@ Eigen::Matrix3d get_tmat(double dt);
 KinematicPoint steady_state_follow_estimate(KinematicPoint p0,
                                             KinematicPoint blocking,
                                             double a_acc, double a_dec,
-                                            double vclose, double xbuff,
-                                            double nominal_intercept);
+                                            double vclose, double xbuff);
 
 KinematicPoint steady_state_max_speed_estimate(KinematicPoint p0, double a_acc,
                                                double vmax);

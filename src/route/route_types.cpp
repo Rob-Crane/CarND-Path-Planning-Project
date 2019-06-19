@@ -22,7 +22,7 @@ boost::optional<RouteVector> RouteSegment::to_route(
   Vector2d p_vec = p.pt() - pt0_.inertial().pt();
   Vector2d local = project(p_vec);
   double s = local(0);
-  if (s > 0 && s < norm()) {
+  if (s > 0) {
     return RouteVector(pt0_.route().pt() + local);
   }
   // If vector's s-projection is before or after segment
