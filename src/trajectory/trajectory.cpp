@@ -12,11 +12,6 @@ namespace path_planner {
 
 // Config section
 constexpr double kLaneChangeTime = 3.2;  // Time to execute a lane change.
-constexpr double kAvgDecel = -5.1;       // Est. braking accel
-constexpr double kAvgAccel = 1.9;        // Est. avg accel to leading veh.
-constexpr double kVClose = 29.9;         // Est. speed to close to leading veh.
-constexpr double kMaintainDistance = 10.1;  // Following distance
-constexpr double kVMax = 19.00;             // Speed limit
 
 JerkMinimizingTrajectory::JerkMinimizingTrajectory(const KinematicPoint& p0,
                                                    const KinematicPoint& p1)
@@ -92,7 +87,7 @@ FollowCarTrajectory::FollowCarTrajectory(
   KinematicPoint blocking(blocking_traj.begin_s(), blocking_traj.begin_v(),
                           blocking_traj.begin_a(), blocking_traj.begin_t());
   KinematicPoint intercept = steady_state_follow_estimate(
-      curr, blocking, kAvgAccel, kAvgDecel, kVClose, kMaintainDistance);
+      curr, blocking);
   traj_ = JerkMinimizingTrajectory(curr, intercept);
   steady_ =
       ConstantSpeedLongitudinalTrajectory(intercept.x_, intercept.v_, intercept.t_);
@@ -112,7 +107,7 @@ UnblockedLongitudinalTrajectory::UnblockedLongitudinalTrajectory(
     : LongitudinalTrajectory(beg_s, beg_v, beg_a, beg_t) {
   KinematicPoint curr(begin_s(), begin_v(), begin_a(), begin_t());
   KinematicPoint steady =
-      steady_state_max_speed_estimate(curr, kAvgAccel, kVMax);
+      steady_state_max_speed_estimate(curr);
   traj_ = JerkMinimizingTrajectory(curr, steady);
   steady_ =
       ConstantSpeedLongitudinalTrajectory(steady.x_, steady.v_, steady.t_);

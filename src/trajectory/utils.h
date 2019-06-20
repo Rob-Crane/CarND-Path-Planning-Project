@@ -19,11 +19,8 @@ Eigen::Matrix3d get_tmat(double dt);
 // vclose, then decelerating to match target speed.  If solution doens't exist,
 // use nominal value (target is close to Ego).
 KinematicPoint steady_state_follow_estimate(KinematicPoint p0,
-                                            KinematicPoint blocking,
-                                            double a_acc, double a_dec,
-                                            double vclose, double xbuff);
+                                            KinematicPoint blocking);
 
-KinematicPoint steady_state_max_speed_estimate(KinematicPoint p0, double a_acc,
-                                               double vmax);
+KinematicPoint steady_state_max_speed_estimate(KinematicPoint p0);
 
 }  // path_planner

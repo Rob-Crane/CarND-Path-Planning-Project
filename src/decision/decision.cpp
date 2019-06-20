@@ -1,6 +1,8 @@
 #include "decision/decision.h"
 #include "config.h"
 
+#include <iostream>  // delete!
+
 #include "trajectory/utils.h"
 
 namespace path_planner {
@@ -11,12 +13,15 @@ std::vector<TrajectoryState> Decision::plan(
   TrajectoryPoint curr_pos(egoPos, route_frame_);
   // Find current position in last trajectory.
   int i = 0;
+  // TODO investigate here as source of wrap-around error.
   for (; i < last_trajectory_.size() &&
          last_trajectory_[i].s() < curr_pos.route().s();
-       ++i) {}
+       ++i) {
+  }
   std::vector<TrajectoryState> new_trajectory;
   for (int j = std::max(i - 1, 0);
        j < last_trajectory_.size() && j < i + kBuffer; ++j) {
+    new_trajectory.push_back(last_trajectory_[j]);
   }
   if (new_trajectory.empty()) {
     new_trajectory.emplace_back(curr_pos, 0.0, 0.0);
@@ -26,11 +31,15 @@ std::vector<TrajectoryState> Decision::plan(
   // previous cycle.
   TrajectoryState ref_state(new_trajectory.back());
 
-  std::vector<TrajectoryVelocity> adversaryTrajectories;
+  using TrajectoryVelocityPtr = std::unique_ptr<TrajectoryVelocity>;
+  std::vector<TrajectoryVelocityPtr> adversaryTrajectories;
   for (const auto &adv : adversaries) {
     InertialVector position(adv.x_, adv.y_);
     InertialVector velocity(adv.dx_, adv.dy_);
-    adversaryTrajectories.emplace_back(position, velocity, route_frame_);
+    //adversaryTrajectories.emplace_back(TrajectoryVelocityPtr(
+        //new TrajectoryVelocity(position, velocity, route_frame_)));
+    adversaryTrajectories.emplace_back(
+        new TrajectoryVelocity(position, velocity, route_frame_));
   }
 
   int currentLane = lane_number(ref_state.d());
@@ -43,16 +52,16 @@ std::vector<TrajectoryState> Decision::plan(
   auto sAhead = [&ref_state](Sx advS) {
     return advS < ref_state.s() ? advS + kRouteLength : advS;
   };
-  for (const auto adv : adversaryTrajectories) {
-    Dx dx = adv.route().d();
-    Sx sx = sAhead(adv.route().s());
+  for (const auto &adv : adversaryTrajectories) {
+    Dx dx = adv->route().d();
+    Sx sx = sAhead(adv->route().s());
     if (lane_number(dx) == currentLane && sx < maxS) {
       if (minAhead) {
         if (sx < sAhead(minAhead->route().s())) {
-          minAhead = &adv;
+          minAhead = adv.get();
         }
       } else {
-        minAhead = &adv;
+        minAhead = adv.get();
       }
     }
   }

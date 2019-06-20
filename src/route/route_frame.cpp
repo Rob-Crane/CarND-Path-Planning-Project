@@ -20,8 +20,6 @@ RouteVector TrajectoryPoint::route() const {
   if (!opt_route_pt_) {
     assert(opt_inertial_pt_);
     auto result = route_frame_->to_route(opt_inertial_pt_.value());
-    if(!result)
-     exitWithStackTrace();
 
     assert(result);
     opt_route_pt_ = result->vector_;
@@ -33,6 +31,8 @@ RouteVector TrajectoryPoint::route() const {
 
 RouteVector TrajectoryVelocity::routeV() const {
   if (!opt_route_v_) {
+    if (!opt_inertial_v_)
+        exitWithStackTrace();
     assert(opt_inertial_v_);
     route();  // Populate route segment.
     assert(opt_route_segment_);

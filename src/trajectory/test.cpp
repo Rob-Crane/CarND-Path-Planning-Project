@@ -19,7 +19,7 @@ void test() {
   constexpr double kVMax = 20.00;    // Speed limit
   KinematicPoint curr(beg_x, beg_v, beg_a, now);
   KinematicPoint steady =
-      steady_state_max_speed_estimate(curr, kAvgAccel, kVMax);
+      steady_state_max_speed_estimate(curr);
   auto traj = JerkMinimizingTrajectory(curr, steady);
   for (seconds t = seconds(0.02); t <= seconds(1.0); t += seconds(0.02)) {
     if (now+t > steady.t_) break;

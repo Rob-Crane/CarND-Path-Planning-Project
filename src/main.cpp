@@ -79,10 +79,10 @@ int run() {
 
           auto msg = "42[\"control\"," + msgJson.dump() + "]";
 
-          if (j[1]["speed"] > 23.0) {
-            std::cerr << "Overspeed exit." << std::endl;
-            std::exit(1);
-          }
+          //if (j[1]["speed"] > 23.0) {
+            //std::cerr << "Overspeed exit." << std::endl;
+            //std::exit(1);
+          //}
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }  // end "telemetry" if
       } else {
