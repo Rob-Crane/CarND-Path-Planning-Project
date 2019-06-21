@@ -4,6 +4,7 @@
 #include <cmath>
 #include <unordered_set>
 
+#include <iostream>
 #include "route_smoother.h"
 
 namespace path_planner {

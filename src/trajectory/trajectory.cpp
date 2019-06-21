@@ -35,22 +35,22 @@ KinematicPoint JerkMinimizingTrajectory::operator()(time_point t) const {
   return ret;
 }
 
-KinematicPoint ConstantSpeedLateralTrajectory::at(time_point t) const {
-  assert(t >= begin_t());
-  // Special case (stay in lane)
-  if (begin_v() == 0.0) {
-    return KinematicPoint(begin_d(), begin_v(), 0.0, t);
-  }
-  seconds dur = t - begin_t();
-  Dx x = begin_d() + dur.count() * begin_v();
-  Dx dx;
-  if (begin_v() < 0.0) {
-    dx = std::max(x, prev_lane_midpoint(x));
-  } else {
-    dx = std::min(x, next_lane_midpoint(x));
-  }
-  return KinematicPoint(dx, begin_v(), 0.0, t);
-}
+// KinematicPoint ConstantSpeedLateralTrajectory::at(time_point t) const {
+// assert(t >= begin_t());
+//// Special case (stay in lane)
+// if (begin_v() == 0.0) {
+// return KinematicPoint(begin_d(), begin_v(), 0.0, t);
+//}
+// seconds dur = t - begin_t();
+// Dx x = begin_d() + dur.count() * begin_v();
+// Dx dx;
+// if (begin_v() < 0.0) {
+// dx = std::max(x, prev_lane_midpoint(x));
+//} else {
+// dx = std::min(x, next_lane_midpoint(x));
+//}
+// return KinematicPoint(dx, begin_v(), 0.0, t);
+//}
 
 KinematicPoint ConstantSpeedLongitudinalTrajectory::at(time_point t) const {
   assert(t >= begin_t());
@@ -58,17 +58,26 @@ KinematicPoint ConstantSpeedLongitudinalTrajectory::at(time_point t) const {
   return KinematicPoint(begin_s() + dur.count() * begin_v(), begin_v(), 0.0, t);
 }
 
-SmoothLateralTrajectory::SmoothLateralTrajectory(Dx beg_d, time_point beg_t,
-                                                 LaneChangeDirection dir)
-    : LateralTrajectory(beg_d, beg_t) {
-  KinematicPoint curr(begin_d(), 0.0, 0.0, begin_t());
-  Dx end_d;
-  if (dir == LaneChangeDirection::kLeft) {
-    end_d = prev_lane_midpoint(begin_d());
+SmoothLateralTrajectory::SmoothLateralTrajectory(Dx beg_d, Dv beg_v, Da beg_a,
+                                                 time_point beg_t, int lane_ind)
+    : LateralTrajectory(beg_d, beg_v, beg_a, beg_t) {
+  KinematicPoint curr(begin_d(), begin_v(), begin_a(), begin_t());
+  Dx end_d(2.0 + 4.0 * lane_ind);
+  double change_time = -1;
+  if (end_d - beg_d > 0) {
+    if (beg_v >= 0) {
+      change_time = 5.0;
+    } else {
+      change_time = 8.0;
+    }
   } else {
-    end_d = next_lane_midpoint(begin_d());
+    if (beg_v >= 0) {
+      change_time = 8.0;
+    } else {
+      change_time = 5.0;
+    }
   }
-  time_point end_t = begin_t() + seconds(kLaneChangeTime);
+  time_point end_t = begin_t() + seconds(change_time);
   KinematicPoint end(end_d, 0.0, 0.0, end_t);
   traj_ = JerkMinimizingTrajectory(curr, end);
 }
@@ -86,11 +95,10 @@ FollowCarTrajectory::FollowCarTrajectory(
   KinematicPoint curr(begin_s(), begin_v(), begin_a(), begin_t());
   KinematicPoint blocking(blocking_traj.begin_s(), blocking_traj.begin_v(),
                           blocking_traj.begin_a(), blocking_traj.begin_t());
-  KinematicPoint intercept = steady_state_follow_estimate(
-      curr, blocking);
+  KinematicPoint intercept = steady_state_follow_estimate(curr, blocking);
   traj_ = JerkMinimizingTrajectory(curr, intercept);
-  steady_ =
-      ConstantSpeedLongitudinalTrajectory(intercept.x_, intercept.v_, intercept.t_);
+  steady_ = ConstantSpeedLongitudinalTrajectory(intercept.x_, intercept.v_,
+                                                intercept.t_);
 }
 
 KinematicPoint FollowCarTrajectory::at(time_point t) const {
@@ -106,8 +114,7 @@ UnblockedLongitudinalTrajectory::UnblockedLongitudinalTrajectory(
     Sx beg_s, Sv beg_v, Sa beg_a, time_point beg_t)
     : LongitudinalTrajectory(beg_s, beg_v, beg_a, beg_t) {
   KinematicPoint curr(begin_s(), begin_v(), begin_a(), begin_t());
-  KinematicPoint steady =
-      steady_state_max_speed_estimate(curr);
+  KinematicPoint steady = steady_state_max_speed_estimate(curr);
   traj_ = JerkMinimizingTrajectory(curr, steady);
   steady_ =
       ConstantSpeedLongitudinalTrajectory(steady.x_, steady.v_, steady.t_);

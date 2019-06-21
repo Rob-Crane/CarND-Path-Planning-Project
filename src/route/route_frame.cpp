@@ -53,7 +53,8 @@ boost::optional<RouteFrame::RouteResult> RouteFrame::to_route(
 
 InertialVector RouteFrame::to_inertial(const RouteVector& route_pt) {
   RouteSegment closest_segment = lane_index_.closest(route_pt);
-  return closest_segment.to_inertial(route_pt);
+  RouteVector r_mod(std::fmod(route_pt.s(), lane_index_.routeEnd()), route_pt.d());
+  return closest_segment.to_inertial(r_mod);
 }
 
 }  // path_planner

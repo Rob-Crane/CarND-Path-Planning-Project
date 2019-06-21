@@ -48,6 +48,8 @@ class KDTreeRouteSegmentIndex {
     return false;
   }
 
+  double routeEnd() const { return route_.back().pt1().route().s(); }
+
  private:
   std::vector<RouteSegment> route_;
   using adapter_t = nanoflann::KDTreeSingleIndexAdaptor<

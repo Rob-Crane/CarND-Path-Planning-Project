@@ -5,6 +5,11 @@
 namespace path_planner {
 
 int lane_number(Dx x) { return std::floor(x / kLaneWidth); }
+bool inEnvelope(Dx ego, Dx adv) {
+    double min = ego-kHalfEnvelopeWidth;
+    double max = ego+kHalfEnvelopeWidth;
+    return adv > min && adv < max;
+}
 
 Dx next_lane_midpoint(Dx x) {
   unsigned current_lane = lane_number(x);

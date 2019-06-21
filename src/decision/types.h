@@ -15,10 +15,12 @@ struct AdversaryObservation {
 
 class TrajectoryState {
  public:
-  TrajectoryState(TrajectoryPoint pt, double sv, double sa)
-      : pt_(std::move(pt)), sv_(sv), sa_(sa) {}
+  TrajectoryState(TrajectoryPoint pt, double sv, double sa, double dv, double da)
+      : pt_(std::move(pt)), sv_(sv), sa_(sa), dv_(dv), da_(da) {}
   Sa sa() const { return sa_; }
   Sv sv() const { return sv_; }
+  Sa da() const { return da_; }
+  Sv dv() const { return dv_; }
   double s() const { return pt_.route().s(); }
   double d() const { return pt_.route().d(); }
   double x() const { return pt_.inertial().x(); }
@@ -28,5 +30,7 @@ class TrajectoryState {
   TrajectoryPoint pt_;
   Sv sv_;
   Sa sa_;
+  Dv dv_;
+  Da da_;
 };
 }  // path_planner

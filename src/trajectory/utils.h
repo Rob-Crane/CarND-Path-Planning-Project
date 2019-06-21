@@ -9,6 +9,7 @@
 namespace path_planner {
 
 int lane_number(Dx x);
+bool inEnvelope(Dx ego, Dx adv);
 Dx next_lane_midpoint(Dx x);
 Dx prev_lane_midpoint(Dx x);
 

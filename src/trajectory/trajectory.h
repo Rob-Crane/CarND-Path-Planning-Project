@@ -23,43 +23,45 @@ class JerkMinimizingTrajectory {
 
 class LateralTrajectory {
  protected:
-  LateralTrajectory(Dx beg_d, time_point beg_t)
-      : begin_d_(beg_d), begin_t_(beg_t){};
+  LateralTrajectory(Dx beg_d, Dv beg_v, Da beg_a, time_point beg_t)
+      : begin_d_(beg_d), begin_v_(beg_v), begin_a_(beg_a), begin_t_(beg_t){};
   virtual KinematicPoint at(time_point t) const = 0;
   Dx begin_d() const { return begin_d_; }
+  Dv begin_v() const { return begin_v_; }
+  Da begin_a() const { return begin_a_; }
   time_point begin_t() const { return begin_t_; }
 
  private:
   Dx begin_d_;
+  Dv begin_v_;
+  Da begin_a_;
   time_point begin_t_;
 };
 
 enum class LaneChangeDirection { kLeft, kRight };
 
-// Maintain constant lateral velocity until next lane mid point reached.
-class ConstantSpeedLateralTrajectory : public LateralTrajectory {
- public:
-  ConstantSpeedLateralTrajectory(Dx beg_d, time_point beg_t, Dv v)
-      : LateralTrajectory(beg_d, beg_t), begin_v_(v){};
-  KinematicPoint at(time_point t) const override;
-  Sv begin_v() const { return begin_v_; }
+//// Maintain constant lateral velocity until next lane mid point reached.
+// class ConstantSpeedLateralTrajectory : public LateralTrajectory {
+// public:
+// ConstantSpeedLateralTrajectory(Dx beg_d, time_point beg_t, Dv v)
+//: LateralTrajectory(beg_d, beg_t), begin_v_(v){};
+// KinematicPoint at(time_point t) const override;
+// Sv begin_v() const { return begin_v_; }
 
- private:
-  Dv begin_v_;
-};
+// private:
+// Dv begin_v_;
+//};
 
 class SmoothLateralTrajectory : public LateralTrajectory {
  public:
-  SmoothLateralTrajectory(Dx beg_d, time_point beg_t, LaneChangeDirection dir);
+  SmoothLateralTrajectory(Dx beg_d, Dv beg_v, Da beg_a, time_point beg_t,
+                          int lane_ind);
   KinematicPoint at(time_point t) const override;
 
  private:
   JerkMinimizingTrajectory traj_;
 };
 
-// Follow a jerk-minimizing lateral trajectory to target lane.
-// class SmoothLateralTrajectory : public LateralTrajectory {
-//};
 
 class LongitudinalTrajectory {
  public:
