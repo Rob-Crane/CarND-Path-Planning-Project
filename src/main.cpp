@@ -26,6 +26,7 @@ int run() {
   uWS::Hub h;
 
   BasicMap map = load_map();
+  std::cout<<"Building course route, may take a few seconds..."<<std::endl;
   std::shared_ptr<RouteFrame> routeFrame = std::make_shared<RouteFrame>(
       map.map_waypoints_x, map.map_waypoints_y, map.map_waypoints_s);
 
@@ -57,6 +58,7 @@ int run() {
           constexpr size_t kSenseDX = 3;
           constexpr size_t kSenseDY = 4;
           std::vector<AdversaryObservation> adversaries;
+
           for (auto f : sensor_fusion) {
             adversaries.emplace_back(f[kSenseX], f[kSenseY], f[kSenseDX],
                                      f[kSenseDY]);
@@ -67,7 +69,6 @@ int run() {
 
           std::vector<double> next_x_vals;
           std::vector<double> next_y_vals;
-          std::vector<double> next_s_vals;
 
           for (TrajectoryState& s : decision_trajectory) {
             next_x_vals.push_back(s.x());
@@ -79,10 +80,6 @@ int run() {
 
           auto msg = "42[\"control\"," + msgJson.dump() + "]";
 
-          //if (j[1]["speed"] > 23.0) {
-            //std::cerr << "Overspeed exit." << std::endl;
-            //std::exit(1);
-          //}
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }  // end "telemetry" if
       } else {
