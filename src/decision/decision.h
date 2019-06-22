@@ -6,37 +6,23 @@
 
 namespace path_planner {
 
-class LaneDecider {
-  int update(double lane_mins[3], int current) {
-    if (current != current_) {
-      current_ = current;
-      weights_ = {0.0, 0.0, 0.0};
-      return current_;
-    }
+using std::chrono::steady_clock;
 
-    int lo_lane = std::max(0, current-1);
-    int hi_lane = std::min(2, current+1);
-    double total = 0.0;
-    for(int i = lo_lane; i < hi_lane; ++i) {
-        total+=lane_mins[i];
-    }
-    double invUpdate = 1 - kLaneUpdateWeight;
-    for(int i = lo_lane; i < hi_lane; ++i) {
-      double normalized = lane_mins[i] / total;
-      weights_[i] = invUpdate * weights_[i] + kLaneUpdateWeight * normalized;
-    }
-    for(int i = lo_lane; i < hi_lane; ++i) {
-       if(weights_[i] > 0.5) {
-         return i;
-       }
-    }
-    return current_;
-  }
+struct LaneDecision {
+  int previous_ = 1;
+  int target_ = 1;
+  time_point begin_ = steady_clock::now();
+};
+
+class LaneDecider {
+ public:
+  LaneDecision update(double lane_mins[3], Dx dx, Sv sv);
 
  private:
-  int weights_[3];
-  int current_;
-}
+  bool in_target(Dx dx) const;
+  bool in_speed_range(Sv v) const;
+  LaneDecision decision_;
+};
 
 class Decision {
  public:

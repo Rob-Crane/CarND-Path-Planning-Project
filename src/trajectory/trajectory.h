@@ -22,10 +22,11 @@ class JerkMinimizingTrajectory {
 };
 
 class LateralTrajectory {
- protected:
+ public:
   LateralTrajectory(Dx beg_d, Dv beg_v, Da beg_a, time_point beg_t)
       : begin_d_(beg_d), begin_v_(beg_v), begin_a_(beg_a), begin_t_(beg_t){};
   virtual KinematicPoint at(time_point t) const = 0;
+ protected:
   Dx begin_d() const { return begin_d_; }
   Dv begin_v() const { return begin_v_; }
   Da begin_a() const { return begin_a_; }
@@ -60,6 +61,8 @@ class SmoothLateralTrajectory : public LateralTrajectory {
 
  private:
   JerkMinimizingTrajectory traj_;
+  time_point end_t_;
+  Dx end_d_;
 };
 
 

@@ -47,6 +47,7 @@ int run() {
         string event = j[0].get<string>();
 
         if (event == "telemetry") {
+         std::cout<<std::chrono::steady_clock::now().time_since_epoch().count()<<"|begin->"<<std::flush;
           // j[1] is the data JSON object
 
           // Main car's localization Data
@@ -80,7 +81,9 @@ int run() {
 
           auto msg = "42[\"control\"," + msgJson.dump() + "]";
 
+          std::cout<<"sending->"<<std::flush;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+          std::cout<<"sent"<<std::endl;
         }  // end "telemetry" if
       } else {
         // Manual driving

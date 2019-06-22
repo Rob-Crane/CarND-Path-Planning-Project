@@ -5,6 +5,7 @@
 namespace path_planner {
 
 int lane_number(Dx x) { return std::floor(x / kLaneWidth); }
+
 bool inEnvelope(Dx ego, Dx adv) {
     double min = ego-kHalfEnvelopeWidth;
     double max = ego+kHalfEnvelopeWidth;
@@ -21,6 +22,10 @@ Dx prev_lane_midpoint(Dx x) {
   int current_lane = lane_number(x);
   int prev_lane = std::max(0, current_lane - 1);
   return 2.0 + prev_lane * kLaneWidth;
+}
+
+double midpoint(int lane_number) {
+    return 2.0 + lane_number*kLaneWidth;
 }
 
 Eigen::Matrix3d get_tmat(double dt) {

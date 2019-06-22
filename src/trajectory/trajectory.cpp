@@ -11,7 +11,6 @@
 namespace path_planner {
 
 // Config section
-constexpr double kLaneChangeTime = 3.2;  // Time to execute a lane change.
 
 JerkMinimizingTrajectory::JerkMinimizingTrajectory(const KinematicPoint& p0,
                                                    const KinematicPoint& p1)
@@ -62,30 +61,27 @@ SmoothLateralTrajectory::SmoothLateralTrajectory(Dx beg_d, Dv beg_v, Da beg_a,
                                                  time_point beg_t, int lane_ind)
     : LateralTrajectory(beg_d, beg_v, beg_a, beg_t) {
   KinematicPoint curr(begin_d(), begin_v(), begin_a(), begin_t());
-  Dx end_d(2.0 + 4.0 * lane_ind);
-  double change_time = -1;
-  if (end_d - beg_d > 0) {
-    if (beg_v >= 0) {
-      change_time = 5.0;
-    } else {
-      change_time = 8.0;
-    }
-  } else {
-    if (beg_v >= 0) {
-      change_time = 8.0;
-    } else {
-      change_time = 5.0;
-    }
-  }
-  time_point end_t = begin_t() + seconds(change_time);
-  KinematicPoint end(end_d, 0.0, 0.0, end_t);
+  //if(midpoint(lane_ind) != end_d_) {
+    //std::cout << "beg_d: " << begin_d() << " beg_v: " << begin_v()
+              //<< " begin_a: " << begin_a()
+              //<< " begin_t: " << begin_t().time_since_epoch().count() << std::endl;
+  //}
+  end_d_ = midpoint(lane_ind);
+  end_t_ = begin_t() + seconds(kLaneChangeTime);
+  KinematicPoint end(end_d_, 0.0, 0.0, end_t_);
+    //std::cout << "end_d_: " << end.x_ << " end_v: " << end.v_
+              //<< " end_a: " << end.a_
+              //<< " end_t: " << end.t_.time_since_epoch().count() << std::endl;
   traj_ = JerkMinimizingTrajectory(curr, end);
 }
 
 KinematicPoint SmoothLateralTrajectory::at(time_point t) const {
   assert(t >= begin_t());
-  KinematicPoint p = traj_(t);
-  return p;
+  if (t > end_t_) {
+      //std::cout<<"cnst";
+    return KinematicPoint(end_d_, 0.0, 0.0, t);
+  }
+  return traj_(t);
 }
 
 FollowCarTrajectory::FollowCarTrajectory(
