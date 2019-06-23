@@ -1,4 +1,4 @@
-#Path Generation
+# Path Generation
 
 The path planner relies on four components:
 * Lane Occupancy detection.
